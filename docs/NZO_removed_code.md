@@ -545,3 +545,12 @@ var STOCHASTIC_PARAM_ALIASES = {
 // Cost parameters varied for each cost product. Must be lower-case, as stored in CostsDb.
 var STOCHASTIC_COST_TYPES = ['capex', 'opex', 'var-opex', 'fuel', 'co2', 'nox', 'sox', 'pmx'];
 ```
+
+## 2026-10-10 — max/min ramp rate gas (not used by the model)
+Removed from `PARAMETER_TO_VARIABLE_NAME` (parameters.js) and from `reference_test_expected.js` inputs:
+```js
+  'max ramp rate gas': 'maxRampRateGas',
+  'min ramp rate gas': 'minRampRateGas',
+```
+Sheet: `01_parameters` rows 27-28 had `=MAX('91_ramp-rates'!E...)` / `=MIN('91_ramp-rates'!E...)` (cleared, rows kept blank). Old `91_ramp-rates` formulas (row n, data layout of old 04): A=`'04_raw-data-hourly'!E(n-1)` date, B=`F(n-1)`, C=`G(n-1)` hour of year, D=`K(n)-K(n-1)` change in must-run, E=`M(n)-M(n-1)` change in gas.
+Old 01_parameters formulas: C4 `=SUM('04_raw-data-hourly'!L1:L8760)/C3`, C5 `=SUM('04_raw-data-hourly'!P1:P8760)/C6`, C7 `=sum('04_raw-data-hourly'!H1:H8760)`; replaced by H2:H8760, L2:L8760, F2:F8760 (same rows, new layout).

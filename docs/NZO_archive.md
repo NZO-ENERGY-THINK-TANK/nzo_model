@@ -151,3 +151,77 @@
 - שלושה תאים הוגדרו כאחוזים בטעות: C35 (solar average yearly production hours), C36 (solar capacity in reference year), C52 (predicted storage capacity limit). הוחלף ל-Number (1,000.12). הערכים לא השתנו, רק התצוגה: 1,700.00, 4,844.89, 70,000.00.
 - מספור השורות: שורה 1 היא "output results", שורה 2 ריקה, ו-maxGasCapacity בשורה 3 (תואם ל-`saveSummary` ול-`logRunToHistory`).
 - לא בוצע איחוד פורמט לכל העמודה (פיסוק אלפים לא אחיד). נשאר כאופציה.
+
+## 2026-10-10 — שלב 4 (נתוני בסיס ב-git): yearly_demand.csv
+**בוצע (באישור David):**
+- נוצר `nzo_model/data/yearly_demand.csv`: עמודות `year, noga23_conservative_twh, noga23_bau_twh`; 28 שורות (2023–2050) + כותרת; מקור: `02_demand` עמודות L, M (שורות 20–47); ערכים בלבד, כ-10 ספרות משמעותיות. אומת: 2050 = 183.7075142 / 162.9970913.
+- `data/README.md`: עודכנה הטבלה והוסף תיאור סכמה (הקובץ מחליף את `03_future-yearly-demand.csv` המתוכנן).
+- `02_demand!L19` ו-`M19`: נוסחאות ה-IMPORTRANGE כטקסט רגיל (תיעוד בלבד; לא מחושב). נתוני L20:M47 לא השתנו.
+- `03_future-yearly-demand` לא שונתה (עמודה B נשארה ערכים מודבקים).
+**הערה:** בניסיון ראשון ההקלדה לא נקלטה בגליון ולא שונה אף תא (נבדק: אין טקסט שנחת ב-02/03).
+**קומיט מוצע:** `Add yearly_demand.csv base data (Noga 2023 conservative/BAU demand)`
+
+## 2026-10-10 — שלב 4: hourly_demand23.csv
+- נוצר `nzo_model/data/hourly_demand23.csv` מלשונית `04_raw-data-hourly`: 8,760 שורות + כותרת, 14 עמודות (סכמה ב-`data/README.md`). הומרו מספרים עם פסיקים וגם אחוזים לשבר. הועבר ואומת בצ'קסאם (אורך 535,661 תווים) מול הנתונים שנשלפו.
+- לא שונה דבר בגיליון. לא יוצאו עמודות A, E, I, J (ראו README).
+- ההערה: תוויות היום בשעון קיץ מוזזות בשעה (אין מקבילה פשוטה לקלנדר UTC); נשמר כפי שבגיליון.
+- קומיט מוצע: `Add hourly_demand23.csv base data (2023 hourly generation profile)`
+- (2026-10-10) `data/README.md`: נוסף מקור לשני הקבצים (נוגה 2023; דו"ח מצב משק החשמל). קישור/תאריך הורדה/יחידות של הדו"ח: להשלמה.
+
+## 2026-10-10 — שלב 4: costs.csv
+- נוצר `nzo_model/data/costs.csv` מ-`05_costs` עמודות A–H, שורות 2–66 (כותרת + 64 שורות), ערכים בלבד בדיוק מלא. G13, G26, G35 הוחלפו בערכים (נוסחאות `=G7`, `=125*C75`, `=C78`).
+- לא יוצאו I–U. שורות מחושבות (PV-Average 19–22, emissions combined 41) נשמרו כערכים. סכמה ב-`data/README.md`.
+- לא שונה דבר בגיליון (הופעל תצוגת "הצג נוסחאות" בדפדפן בלבד, ללא שינוי בתוכן).
+- קומיט מוצע: `Add costs.csv base data (05_costs columns A-H)`
+- (2026-10-10) `costs.csv` שורות 15–18 (`share-of-deployment`): `base_price` = ערך 2025 (0.2, 0.2, 0.3, 0.3). בדיקת שימוש: `pv-average` capex/opex/lifetime (שורות 20–22) נקראים בקוד; שורה 41 (`emissions combined`) לא נקראת בקוד.
+- (2026-10-10) הוסרו מ-`costs.csv` שורות `PV-Average` (4) ו-`emissions combined` (1): 59 שורות נתונים. **משימה פתוחה:** לכתוב פונקציה לחישוב `pv-average` (capex, opex, lifetime) במקום נוסחאות הגיליון. נרשם גם ב-`data/README.md`.
+- (2026-10-10) שלב 4 הושלם לפי החלטת David: 3 קבצים ב-`data/` (yearly_demand, hourly_demand23, costs). `01_parameters` ו-`20_roadmaps-input` לא יוצאו. **לבדוק:** `03_future-yearly-demand` עמודות must-run (`mustRun = row[6]` ב-`data-input.js`) עדיין רק בגיליון ולא ב-git.
+- (2026-10-10) הבהרת David: `01_parameters` הוא קלט ספציפי להרצה ולא הנחות בסיס, לכן אינו חלק מנתוני הבסיס ב-git. נרשם ב-`data/README.md`.
+
+## 2026-10-10 — שלב 5 (תרחיש ייחוס), חלק 1: קוד
+- נוסף `src/reference_test.js` (150 שורות) ו-`src/reference_test_expected.js` (placeholder: `REFERENCE_EXPECTED = null`). הפרויקט: 13 קבצים (11 + 2), 3,242 שורות. בדיקת תחביר על כל הקבצים עברה. עדיין לא הועלה ל-Apps Script.
+- `runReferenceTest()`: מריצה Roadmap `Base` (keyframes מוטמעים בקוד, 2026–2050) בסימולציה ועלויות, בלי לכתוב ללשוניות, ומשווה ל-`REFERENCE_EXPECTED` (סבילות יחסית 1e-6). סטטוס: PASS / FAIL / INPUT CHANGED (פרמטרים מ-01_parameters שונים מהמוקלטים) / NO EXPECTED.
+- `recordReferenceTest()`: מריצה ומציגה JSON להדבקה ב-`reference_test_expected.js`.
+- נשאר: clasp push, הרצת record, הדבקת הערכים, הרצה ל-PASS, בדיקת כישלון מכוון, חיבור לתפריט, `reference/README.md`, נוהל PR.
+- (2026-10-10) שונו שמות לפי בקשת David: `reference_test.js`, `reference_test_expected.js`, הפונקציות `runReferenceTest()` ו-`recordReferenceTest()`.
+- (2026-10-10) הוקלטו ערכי הייחוס ב-`src/reference_test_expected.js` (Base 2026–2050: NPV = 607,632,321,064; נתח מתחדשות מרבי 45.4%; שיא הספק גז 2050 = 25,436 MW). נשאר: clasp push, הרצת `runReferenceTest` ל-PASS, בדיקת כישלון מכוון, חיבור לתפריט.
+- (2026-10-10) `runReferenceTest()` הורצה בעורך: PASS (20 ערכים). תוקן: `_showReferenceMessage` זרקה חריגה כשאין UI (הרצה מהעורך); עכשיו עטופה ב-try/catch והתוצאה נשארת ביומן. דורש `clasp push`.
+- (2026-10-10) אומת שהמבחן רגיש: שינוי סולארי 2026 מ-8000 ל-8100 (בקובץ מקומי + clasp push) נתן FAIL (NPV שונה ב-0.0044%, solarCost ב-0.105%). `PASS` קודם אחרי עריכה ישירות בעורך נבע ככל הנראה מגרסה לא מעודכנת בעורך. **נוהל: עורכים רק בקבצים המקומיים ו-clasp push, לא בעורך.** הוסרה פונקציית האבחון הזמנית. הערך הוחזר ל-8000 (דורש clasp push).
+- (2026-10-10) שלב 5 הושלם בקוד: נוסף תת-תפריט `NZO Model ← Advanced` (Run / Record reference test) ב-`main.js` (`buildMenu` עבר מ-`addMenu` ל-`createMenu`, ו-`onEdit` עטוף ב-try/catch). נכתב `reference/README.md` (נוהל PR) ועודכן `NZO_core.md`. דורש `clasp push` ובדיקת תפריט בגיליון (רענון).
+- קומיט מוצע: `Add reference test (regression) with Advanced menu and docs`
+
+## 2026-10-10 — שלב 6 (מטא-דאטה בהרצות), 6א: גרסת קוד
+- נוסף `src/version.js` עם `const CODE_VERSION = '1.0.0'` (14 קבצים). בדיקת תחביר עברה. ההחלטה: שורות היסטוריה ישנות ב-`90_run-history` אפשר להסיר (בגיבוי ובאישור לפני המחיקה). תוכנית שלב 6 אושרה: 6א גרסת קוד, 6ב `_meta`/`_status`/hash, 6ג עמודות ב-`90_run-history`, 6ד תיאור ב-`save Roadmap`.
+
+## 2026-10-10 — שלב 6ב: `_meta`, `_status`, hash
+- נוסף `src/data-meta.js` (135 שורות; 15 קבצים, 3,438 שורות): `computeDataHash()` (SHA-256 על הטווחים שיוצאו ל-git: `05_costs` A2:H66, `02_demand` L20:M47, `04_raw-data-hourly` עמודות B,C,D,F,G,H,K–R שורות 2–8761; נרמול: מספרים ל-10 ספרות משמעותיות, זמן H:MM:SS), `getDataMeta()`, `updateDataHash()` ו-`checkDataStatus()`. הלשוניות `_meta` ו-`_status` נוצרות בסוף הגיליון בהרצה הראשונה.
+- `main.js`: נוספו לתת-תפריט Advanced "Update data hash" ו-"Check data status".
+- בדיקת תחביר על כל הפרויקט עברה. לא הועלה לשרת.
+- (נסגר 2026-10-10) `gas_share` ב-`hourly_demand23.csv`: יוצאה מחדש מהגיליון בערך מלא ונבדקה: כל 8,760 הערכים בגיליון הם בדיוק 2 ספרות אחרי הנקודה, וה-hash (SHA-256) של העמודה ב-CSV זהה לזה של הגיליון. לא נדרש שינוי בקובץ.
+
+## 2026-10-10 — שלב 6ב אומת, 6ג: מטא-דאטה ב-`90_run-history`
+- 6ב אומת בגיליון: `code_version 1.0.0`, `data_version data-1.0`, התאמת hash: true.
+- נוסף `getRunMetadata()` ב-`data-meta.js` (`run_id`, `researcher`, `code_version`, `data_version`, `data_hash_match`; ה-hash מחושב חי בכל הרצה, `researcher` ריק אם אין הרשאה).
+- `logRunToHistory` (`history-save.js`): חמש העמודות נוספו אחרי `Timestamp`, לפני הפרמטרים והתוצאות. הכותרת הקיימת מזוהה כשונה ונוספת כותרת חדשה בלי לפגוע בשורות הקודמות. בדיקת תחביר עברה. לא הועלה לשרת.
+- נשאר: הסרת שורות ישנות מ-`90_run-history` (בגיבוי ובאישור לפני המחיקה), 6ד (תיאור ב-`save Roadmap`).
+
+## 2026-10-10 — שלב 6ד: תיאור ומטא-דאטה ב-`save Roadmap`
+- `saveRoadmapToSheet` (`history-save.js`): נוספה שאלת "description (optional)" אחרי שם השמירה, והעמודות `run_id`, `researcher`, `code_version`, `data_version`, `data_hash_match`, `description` נוספו אחרי `Saved at`. כותרת חדשה נוספת (בלי להחליף שורות קיימות) כשהכותרת האחרונה שונה מהמבנה החדש; בעבר נכתבה כותרת רק בגיליון ריק. בדיקת תחביר עברה. לא הועלה לשרת.
+- אחרי אימות 6ג-6ד נותרו: הסרת שורות ישנות ב-`90_run-history` (בגיבוי ובאישור לפני המחיקה), עדכון `NZO_core.md`, ותג `data-1.0` ב-git.
+- (2026-10-10) אומת 6ג: שורה חדשה ב-`90_run-history` עם `run_id`, `researcher`, `1.0.0`, `data-1.0`, `TRUE`. ב-`90_run-history` אין שורות ישנות (כותרת ושורה אחת בלבד), ולכן לא נדרשה הסרה. עודכן `NZO_core.md` (סעיף מצב נוכחי ופריטי תפריט).
+
+## 2026-10-10 — `costs.csv`: נוספו עמודות I–N
+- ב-`costs.csv` נוספו `pct_change_2025` עד `pct_change_2050` (עמודות I–N בגיליון): 59 שורות, 14 עמודות. נמצא שבלעדיהן אי אפשר לשחזר את `05_costs`. ערכים מלאים, כולל תאים שהיו נוסחאות (`=J3`). `data/README.md` עודכן.
+- `data-meta.js`: טווח ה-hash של `05_costs` הורחב ל-A2:N66 (14 עמודות). **ה-hash ב-`_meta` ישן, ולכן צריך `clasp push` ו-"Update data hash" מחדש (אותה גרסה `data-1.0` אם עוד לא נוצר תג, אחרת `data-1.1`).** הערה: ה-hash כולל גם את שורות `PV-Average` ו-`emissions combined` המחושבות (לא ב-CSV), ולכן אינו ניתן לשחזור מה-CSV בלבד.
+
+### 2026-10-10 — `_readRefYearHoursData` supports data layout (step 7 prep)
+- `src/data-input.js`: reads 04_raw-data-hourly ONLY in data layout (14 columns as in `data/hourly_demand23.csv`, A1 == 'day'); throws a clear error otherwise. Legacy layout support removed at David's request. Output shape unchanged.
+- Decision (David): 02_demand master tab is loaded entirely from `yearly_demand.csv`; 04 columns A,E,I,J not needed; 05_costs unused rows kept blank and marked "לא בשימוש" (import by product+parameter).
+- Pending: references from 03 to 02_demand L20:M47 must be redirected when 02 is loaded from CSV (A1:C29); hash range for 02/04 to be updated then.
+- Verification: syntax OK on all src files. Order: backup copy of sheet → import CSV into 04 (replace sheet) → clasp push → reference test PASS.
+- data-meta.js: hash range of 04 = A2:N8761 (14 cols, no pick) after sheet is in data layout; Update data hash needed.
+
+### 2026-10-10 — 04 in data layout; 01_parameters formulas migrated (step A) — reference test PASS (20 values)
+- 01_parameters C4/C5/C7 now: `=SUM('04_raw-data-hourly'!H2:H8760)/C3`, `...L2:L8760)/C6`, `...F2:F8760)` (same row span as before: rows 2..8760).
+- OPEN BUG: these ranges exclude the last hour (row 8761, hour 8760). Fix later as a separate change (range to row 8761) + re-record reference.
+- Step B (done in code): removed 'max/min ramp rate gas' from parameters.js mapping and reference_test_expected.js (unused by model; backup in NZO_removed_code.md). Sheet: clear 01_parameters rows 27-28 (keep rows). Step C pending: 91_ramp-rates tab to be deleted after backup + approval.
