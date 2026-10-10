@@ -53,7 +53,9 @@
 - `clasp clone` לתוך `src/`: 11 קבצים (מופיעים מקומית כ-`.js`), 3,102 שורות, כמו בעורך.
 - commit ראשון באנגלית (`Initial commit: repository skeleton, Apps Script code and docs`). **מוסכמה: הודעות commit באנגלית.**
 - `clasp push` הורץ, והסקריפט הורץ בגליון בהצלחה (David).
-- **נשאר:** העברת תבניות Issue/PR מ-`docs/github-templates/` ל-`.github/`, והוספת הפתוחים כ-Issues.
+- תבניות Issue/PR הועברו ל-`.github/` (commit: `Add issue and pull request templates`).
+- הפתוחים נפתחו כ-5 Issues ב-GitHub (באנגלית): `312!B77:B79`, `310!A111` (#REF!), פורמט `12_summary`, לשוניות `06_/40_/41_` שלא בשימוש, ושאלות המידול.
+- **שלב 3 הושלם.**
 
 ### 10 באוקטובר 2026 – ניקיון ראשוני, סבבים 2–3 (הושלם)
 - **סבב 2 (נמחק באישור, נשמר ב-Drive ואומת אחרי טעינה מחדש):** `chooseRoadmap` (קובץ 7, 625–670), `change` (קובץ 11, 33–93), `ProductEnumeration` (קובץ 11, 96–102), `dateReviver` ו-`STOCHASTIC_SAFE_LIMIT_MS` (קובץ 1, 128–138).
