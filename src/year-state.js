@@ -281,7 +281,13 @@ class YearState{
         throw new Error('Invalid PV share for ' + types[i][0] + ' in roadmap ' + this.name + ', year ' + this.year + ': ' + share);
       }
       total += share;
-      weighted += share * costsDb.get(types[i][0], parameter, this.year);
+      var value = costsDb.get(types[i][0], parameter, this.year);
+      // PV-Dual-Use capex in the cost data is the construction cost only (roads, agro, etc.);
+      // the panels themselves are costed like commercial PV.
+      if (types[i][0] === 'pv-dual-use' && parameter === 'capex') {
+        value += costsDb.get('pv-commercial', 'capex', this.year);
+      }
+      weighted += share * value;
     }
     if (Math.abs(total - 1) > 1e-6) {
       throw new Error('PV shares must sum to 1 (roadmap ' + this.name + ', year ' + this.year + '): sum=' + total);

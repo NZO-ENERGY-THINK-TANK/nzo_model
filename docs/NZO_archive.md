@@ -261,3 +261,15 @@
 - `data/costs.csv`: removed the 4 `share-of-deployment` rows → 55 data rows. README updated.
 - Pending in sheet 05_costs: delete rows 15–22 (share-of-deployment 15–18, PV-Average 19–22; code no longer reads them) and `emissions, combined` (old row 41); then hash range `05_costs` rows must equal CSV rows (55) → update data-meta.js; Update data hash (data-1.4). NOTE: readTableFromSheet stops at the first blank product cell, so rows must be deleted, not cleared.
 - DONE (by Claude, at David's request): 05_costs rows deleted — `emissions, combined` and rows 15–22 (shares + PV-Average). Sheet now has 55 data rows (sheet rows 3–57), keys and order identical to costs.csv (verified). data-meta.js: hash range 05_costs = A2:N57 (56 rows incl. header row). Next: clasp push → reference test → Update data hash (data-1.4) → commit + tag.
+
+### 2026-10-10 — costs.js reads CSV layout; values computed in code; PV-Dual-Use capex rule in code (code only, not pushed)
+- `costs.js`: `FORECASTED_PARAM_HEADERS` = costs.csv headers (product,parameter,source,units,comments,increase,base_price,pct_change_2022…2050); header row is now row 1 of `05_costs`. Values = `base_price × (1+pct)` computed in code (replaces sheet columns O–U). `increase` mode 'none' removed (only linear/yoy; otherwise error).
+- `year-state.js` `pvAverage`: pv-dual-use capex = its own (construction) capex + pv-commercial capex (rule previously in the sheet's cost row). Side effect: `15_costs-output` will show dual-use capex as construction only (1250).
+- `data-meta.js`: 05_costs hash range = A1:N56 (header + 55 rows).
+- 05_costs lower "Parameters" section (gas price etc.) not used by code — removed by re-import.
+- Order: search sheets for formulas referencing `05_costs` → import data/costs.csv into 05_costs ("Replace current sheet") → clasp push → Run reference test (expect PASS) → Update data hash (data-1.5) → Check data status → commit + tag.
+
+### 2026-10-10 — Bug 3 fixed: last hour (row 8761) included in 01_parameters C4/C5/C7; reference re-recorded (intentional change)
+- David changed ranges in 01_parameters C4/C5/C7 to H2:H8761, L2:L8761, F2:F8761 (previously ended at row 8760, excluding the last hour of the reference year).
+- `reference_test_expected.js` re-recorded (2026-10-10T15:55Z). Before → after: totalEnergyDemandYearlyRefYear 76,997,689 → 77,005,378 (+0.010%); windCapacityRefYear 158.4259 → 158.4321; totalCost 607,632,321,064 → 607,560,837,756 (−0.012%); gasCost 323,403,469,890 → 323,360,171,860; maxRenewableShare 0.454393 → 0.454387; totalCost_2050 75,987,810,935 → 75,977,684,335. solarCapacityRefYear, solarKwToKwhYearly, storageCost, solarCost unchanged.
+- Next: clasp push → reference test (expect PASS) → Update data hash (data-1.6) → commit + tag.

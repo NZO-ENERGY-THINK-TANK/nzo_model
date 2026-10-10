@@ -1,26 +1,20 @@
 const SHEET_COSTS = '05_costs'
+// Header row of 05_costs = header row of data/costs.csv (sheet row 1). Values per year are computed in code.
 var FORECASTED_PARAM_HEADERS = [
-  'Product',
-  'Parameter',
-  'Source',
-  'Units',
-  'Comments',
+  'product',
+  'parameter',
+  'source',
+  'units',
+  'comments',
   'increase',
-  'Base Price',
-  '2022',
-  '2025',
-  '2030',
-  '2035',
-  '2040',
-  '2045',
-  '2050',
-  '2022',
-  '2025',
-  '2030',
-  '2035',
-  '2040',
-  '2045',
-  '2050'
+  'base_price',
+  'pct_change_2022',
+  'pct_change_2025',
+  'pct_change_2030',
+  'pct_change_2035',
+  'pct_change_2040',
+  'pct_change_2045',
+  'pct_change_2050'
 ]
 
 var FORECASTED_PARAM_OUTPUT_HEADERS = ['product', 'parameter', 'source', 'units'].concat(interpolate([2022, 2050]));
@@ -89,6 +83,7 @@ class ForecastedParam {
    * Initializes the parameter and calculates values for all years.
    * * @param {Array} row - Raw data row from the spreadsheet. 
    * Note: The 'row' array is consumed (shifted) during initialization.
+   * Row layout = data/costs.csv: 6 descriptor columns, base_price, and 7 pct_change columns (2022..2050).
    */
   constructor(row){
     // Extraction: Remove metadata from the start of the row
@@ -97,13 +92,14 @@ class ForecastedParam {
     this.source = row.shift().toLowerCase()
     this.units = row.shift()
     this.comments = row.shift()
-    this.increase = row.shift() // Determines the calculation mode (linear, yoy, none)
+    this.increase = row.shift() // Determines the calculation mode (linear, yoy)
     this.basePrice = row.shift()
 
-    // Slicing: Separate percent-change data from absolute value data
-    // FIXME: Hardcoded slice indices (0-7, 7-14) assume a fixed column structure.
+    // Percent change vs. base price at each anchor year (2022, 2025, ..., 2050).
+    var row0BasePrice = this.basePrice;
     this.percentChange = addYearDimension(row.slice(0, 7))
-    this.values = addYearDimension(row.slice(7,14))
+    // Absolute value at each anchor year = base price * (1 + percent change).
+    this.values = this.percentChange.map(function(p) { return [p[0], row0BasePrice * (1 + p[1])]; })
     this.valuesByYear = {}
     this.headers = FORECASTED_PARAM_OUTPUT_HEADERS
 
@@ -122,9 +118,6 @@ class ForecastedParam {
       for (var i = 1; i <= 28; ++i) {
         this.values.push([2022 + i, this.values[i-1][1] * (1+this.percentChange[i][1])]);
       }
-    } else if (this.increase === 'none') { // should match rows with pv land use distribution
-    // Static/Step values (e.g., Land Use Distribution)
-      this.values = interpolate(this.values);
     } else {
       throw "Failed getting costs data. wrong increase mode: " + this.increase;
     }
@@ -156,7 +149,7 @@ function addYearDimension(values) {
  */
 function getCostsDb() {
   // Extract: Read raw rows, skipping the header line
-  var rows = readTableFromSheet(SHEET_COSTS, 2, FORECASTED_PARAM_HEADERS);
+  var rows = readTableFromSheet(SHEET_COSTS, 1, FORECASTED_PARAM_HEADERS);
   // Transform: Convert raw data rows into smart objects containing forecasting logic
   costs = rows.map(row => new ForecastedParam(row));
   return new CostsDb(costs);
