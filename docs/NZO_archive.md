@@ -273,3 +273,20 @@
 - David changed ranges in 01_parameters C4/C5/C7 to H2:H8761, L2:L8761, F2:F8761 (previously ended at row 8760, excluding the last hour of the reference year).
 - `reference_test_expected.js` re-recorded (2026-10-10T15:55Z). Before → after: totalEnergyDemandYearlyRefYear 76,997,689 → 77,005,378 (+0.010%); windCapacityRefYear 158.4259 → 158.4321; totalCost 607,632,321,064 → 607,560,837,756 (−0.012%); gasCost 323,403,469,890 → 323,360,171,860; maxRenewableShare 0.454393 → 0.454387; totalCost_2050 75,987,810,935 → 75,977,684,335. solarCapacityRefYear, solarKwToKwhYearly, storageCost, solarCost unchanged.
 - Next: clasp push → reference test (expect PASS) → Update data hash (data-1.6) → commit + tag.
+
+### 2026-10-10 — Step 7 (master + copies): decisions (David: choose the simplest options)
+- One Apps Script project bound to both master and personal copies (clasp push to the master; copies inherit via "Make a copy").
+- `MASTER_SPREADSHEET_ID` as a constant in git (`src/config.js`); not a secret — access is controlled by Drive permissions.
+- Researcher results are saved via the existing `90_run-history` (32_saved-roadmaps was deleted); a dedicated save tab is deferred to step 8.
+- Master = copy of the current sheet (data already equals git data-1.5), with personal input and outputs cleared.
+- Note: `00_documentation` still lists deleted tabs (03_future-yearly-demand, 91_ramp-rates) and lacks 03_must_run_yearly — to update.
+
+### 2026-10-10 — Step 7: master sheet created; config.js
+- David created "NZO MODEL – MASTER" (ID 1Jt5JOLmbDQKUwqXYmxYCN9RaK641yBoiplJZKN8O_xY) from the current sheet. New `src/config.js` with `MASTER_SPREADSHEET_ID` (not used by code yet; for Sync, step 10).
+- Findings while cleaning the master: (1) `12_summary` — clear only A3:C (code writes from row 3; A1 title stays, row 2 reserved for banner). (2) `15_costs-output` must NOT be cleared: 01_parameters C24/C26 (storage efficiency / depth of discharge) read it by HLOOKUP; after clearing → #N/A → "storageDepthOfDischarge out of range". Run Calculate cost after any 05_costs change. (3) C24/C26 used fixed row indexes 28/29 into 15_costs-output; rows shifted to 20/21 after removing share/pv-average rows → replaced with name-based SUMIFS/INDEX/MATCH (storage/efficiency, storage/depth of discharge). 2050 check: 95%/95%. (4) C2 data validation pointed to the deleted `03_future-yearly-demand` → replaced with a manual list (Noga conservative, Noga BAU). (5) C9/C29 now read 02_demand / 03_must_run_yearly.
+- 00_documentation: add 03_must_run_yearly (link + text), remove deleted tabs rows.
+- Predict year in master: no warnings.
+
+### 2026-10-10 — Apps Script project switched to the master
+- David no longer maintains the original sheet; only the master. `src/.clasp.json` scriptId now = master's script ID 108jUS5eOI2F3Gl0KfffnqaTiY6hyluz-RWXs9qqJjsiPbuvboAa2baOA (previous: 1oJyM7zSttsEcdr2fy4CrNEesJi3gYN70-_cLG8LvMc0rQxSg7P_JUWbq, the original sheet). A second file `.clasp-master.json` with `clasp push --project` failed ("srcDir escapes project root"); it is redundant and to be deleted by David.
+- `clasp push` updates code only, never sheet data.
