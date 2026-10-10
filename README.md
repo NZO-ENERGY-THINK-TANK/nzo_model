@@ -13,7 +13,7 @@
 | `reference/` | תרחיש ייחוס ותוצאותיו הצפויות |
 | `charts/` | קטלוג תבניות גרפים |
 | `docs/` | תיעוד: מסמך העיצוב, `NZO_core.md`, `NZO_archive.md`, `NZO_removed_code.md` |
-| `docs/github-templates/` | תבניות Issue ו-Pull Request (להעביר ל-`.github/` בעת חיבור הריפו; כלי העבודה לא יכול לכתוב לשם) |
+| `.github/` | Issue and pull request templates |
 
 ## עקרונות עבודה
 

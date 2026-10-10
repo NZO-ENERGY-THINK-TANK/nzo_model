@@ -48,6 +48,13 @@
 > **שמות הקבצים (לפי `CLAUDE.md`):** קובץ 1 = `main.gs`, קובץ 2 = `costs.gs`, קובץ 3 = `data-input.gs`, קובץ 11 = `stochastic analysis.gs`.
 > **השפעה על התיעוד:** הניתוחים sensitivity ו-stochastic הוסרו מהקוד. הלשוניות `06_sensitivity-analysis`, `40_stochastic-analysis-input`, `41_stochastic-analysis-output` נשארו בגליון, אבל אין קוד שקורא להן. שאלה 7 במסמך העיצוב (האם הניתוחים חוזרים) נענתה בפועל: הוסרו, והקוד המלא שמור ב-`NZO_removed_code.md`.
 
+### 10 באוקטובר 2026 – שלב 3: גיט ו-clasp (הושלם)
+- נוצר שלד הריפו `nzo_model` (`src/`, `data/`, `reference/`, `charts/`, `docs/`) והועלה ל-`git@github.com:NZO-ENERGY-THINK-TANK/nzo_model.git` (ענף `main`, בלי הרשאות והגנות).
+- `clasp clone` לתוך `src/`: 11 קבצים (מופיעים מקומית כ-`.js`), 3,102 שורות, כמו בעורך.
+- commit ראשון באנגלית (`Initial commit: repository skeleton, Apps Script code and docs`). **מוסכמה: הודעות commit באנגלית.**
+- `clasp push` הורץ, והסקריפט הורץ בגליון בהצלחה (David).
+- **נשאר:** העברת תבניות Issue/PR מ-`docs/github-templates/` ל-`.github/`, והוספת הפתוחים כ-Issues.
+
 ### 10 באוקטובר 2026 – ניקיון ראשוני, סבבים 2–3 (הושלם)
 - **סבב 2 (נמחק באישור, נשמר ב-Drive ואומת אחרי טעינה מחדש):** `chooseRoadmap` (קובץ 7, 625–670), `change` (קובץ 11, 33–93), `ProductEnumeration` (קובץ 11, 96–102), `dateReviver` ו-`STOCHASTIC_SAFE_LIMIT_MS` (קובץ 1, 128–138).
 - **סבב 3:** `SHEET_SENSITIVITY` ו-`CHANGES_HEADERS` (קובץ 2: costs.gs, 180 שורות במקום 193), והקובץ `stochastic analysis.gs` נמחק כולו (קובץ 11, 33 שורות: שני קבועי `SHEET_STOCHASTIC_*`, שתי כותרות Stochastic, `STOCHASTIC_PARAM_ALIASES`, `STOCHASTIC_COST_TYPES`).
