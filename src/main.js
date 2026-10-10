@@ -21,9 +21,6 @@ function buildMenu() {//saveRoadmap
   var menuItems = [
     {name: `Predict Year: ${getParameters().currentYear}` , functionName: 'predictYear'},
     {name: 'Calculate Costs', functionName: 'calculateCosts'},
-    {name: 'Enumerate Roadmaps', functionName: 'enumerateAndCompareRoadmaps'},
-    {name: 'Summarize Roadmaps', functionName: 'summarizeRoadmaps'},
-    {name: 'save Roadmap', functionName: 'saveRoadmap'},
     {name: 'Calculate Scenarios and Costs', functionName: 'calculateScenariosAndCosts'},
     // {name: 'sensitivity Analysis', functionName: 'sensitivityAnalysis'},
     // {name: 'stochastic Analysis',functionName: 'stochasticAnalysis'}
@@ -93,46 +90,3 @@ function calculateScenariosAndCosts() {
   saveCosts(costsDb);
   SpreadsheetApp.flush();
 };
-
-/**Optimization
- * Sensitivity Analysis Engine: Generates and evaluates roadmaps based on parameter ranges (Min/Max/Interval).
- * Supports 'resumable execution' to handle long runs exceeding Google's 6-minute limit.
- */
-function enumerateAndCompareRoadmaps() {
-  var in_data = getInputData();
-
-  // Fetch configuration object defining the search space (e.g., Solar: 60k-130k, steps of 10k)
-  var roadmapsEnumState = getRoadmapsEnumInput();
-
-  // Resume Logic: when resuming a saved sweep, startingIndex is the 0-based index of the first
-  // combination that is NOT yet in the output sheet. A fresh sweep starts from 0.
-  var startingIndex = roadmapsEnumState.started ? roadmapsEnumState.lastIndex() + 1 : 0;
-  var costsDb = getCostsDb();
-
-  // Generate the specific batch of roadmaps for this iteration
-  var roadmaps = enumerateRoadmaps(roadmapsEnumState, in_data, costsDb);
-  saveRoadmaps(roadmaps, startingIndex);
-
-  // Checkpoint: Save the progress index so the next run knows where to start
-  saveRoadmapsCalcProgress(roadmapsEnumState);
-  SpreadsheetApp.flush();
-};
-
-/**
- * Post-Processing: Aggregates raw roadmap data into high-level KPIs.
- * Transforms detailed simulation outputs into a summary table for easier comparison.
- */
-function summarizeRoadmaps() {
-  var roadmaps = readRoadmapsOutput();
-
-  var roadmapsSummary = summarizeRoadmapsOutput(roadmaps);
-
-  saveRoadmapsSummary(roadmapsSummary);
-};
-
-function saveRoadmap(){
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var saveSheet = getOrCreateSheet(SHEET_SAVED_ROADMAPS);
-  saveRoadmapToSheet(ss,saveSheet)
-
-}

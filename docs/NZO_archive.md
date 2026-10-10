@@ -290,3 +290,9 @@
 ### 2026-10-10 — Apps Script project switched to the master
 - David no longer maintains the original sheet; only the master. `src/.clasp.json` scriptId now = master's script ID 108jUS5eOI2F3Gl0KfffnqaTiY6hyluz-RWXs9qqJjsiPbuvboAa2baOA (previous: 1oJyM7zSttsEcdr2fy4CrNEesJi3gYN70-_cLG8LvMc0rQxSg7P_JUWbq, the original sheet). A second file `.clasp-master.json` with `clasp push --project` failed ("srcDir escapes project root"); it is redundant and to be deleted by David.
 - `clasp push` updates code only, never sheet data.
+
+### 2026-10-10 — Removed roadmap enumeration (20_/21_/22_), "save Roadmap", unused constant (approved by David)
+- Removed: whole `roadmaps-enumeration.js` content (sweep over 20_roadmaps-input → 21_roadmaps-output → 22_roadmaps-summary; classes RoadmapsEnumeration/ParameterEnumeration); menu items `Enumerate Roadmaps`, `Summarize Roadmaps`, `save Roadmap` and their functions in `main.js`; `saveRoadmapToSheet`, `getUniqueModelsFromColumn`, `SHEET_SAVED_ROADMAPS` in `history-save.js` (the target tab 32_saved-roadmaps was already deleted); `HOURLY_EXPORTED_COLUMNS` in `data-meta.js`. All backed up in `NZO_removed_code.md`.
+- Dry check: no other file referenced any removed name; syntax check OK on all remaining files (concatenated too). Sensitivity/stochastic commented menu lines kept (open question 7).
+- The sandbox cannot delete `src/roadmaps-enumeration.js` — David deletes it (`rm`), then `clasp push` (clasp removes it from the project only if the file is gone locally; otherwise delete it in the editor).
+- Sheet steps (David): after backup, delete tabs 20_roadmaps-input, 21_roadmaps-output, 22_roadmaps-summary in the master; remove their rows from 00_documentation; Run reference test (expect PASS); run one roadmap.

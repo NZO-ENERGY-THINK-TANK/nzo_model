@@ -14,8 +14,6 @@ const SHEET_STATUS = '_status';
 const SHEET_DEMAND_INPUT = '02_demand';
 const SHEET_MUST_RUN_INPUT = '03_must_run_yearly';
 
-// 04_raw-data-hourly: exported columns B,C,D,F,G,H,K..R (1-based column numbers below).
-const HOURLY_EXPORTED_COLUMNS = [2, 3, 4, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18];
 
 const DATA_HASH_RANGES = [
   {sheet: '05_costs', row: 1, col: 1, rows: 56, cols: 14, pick: null},
