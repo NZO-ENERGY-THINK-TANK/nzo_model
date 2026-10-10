@@ -225,3 +225,14 @@
 - 01_parameters C4/C5/C7 now: `=SUM('04_raw-data-hourly'!H2:H8760)/C3`, `...L2:L8760)/C6`, `...F2:F8760)` (same row span as before: rows 2..8760).
 - OPEN BUG: these ranges exclude the last hour (row 8761, hour 8760). Fix later as a separate change (range to row 8761) + re-record reference.
 - Step B (done in code): removed 'max/min ramp rate gas' from parameters.js mapping and reference_test_expected.js (unused by model; backup in NZO_removed_code.md). Sheet: clear 01_parameters rows 27-28 (keep rows). Step C pending: 91_ramp-rates tab to be deleted after backup + approval.
+
+### 2026-10-10 — 91_ramp-rates deleted; demand scenarios reduced to Noga conservative + Noga BAU
+- `91_ramp-rates` deleted by David (formulas backed up in NZO_removed_code.md); reference test to be re-run.
+- 03_future-yearly-demand: columns K–O (demand-3, demand-3.5, demand-pua, demand-nzo, demand-Rashut hashmal) cleared (columns kept, values backed up in NZO_removed_code.md). Dropdown at 01_parameters!C2 now lists only Noga conservative / Noga BAU (verified). Code reads 03 columns A–H only; no scenario names in code.
+- Next: load 02_demand from yearly_demand.csv (A1:C29) then replace 03!P11:Q38 formulas with year lookups into 02; update hash range for 02 (A2:C29).
+- data-meta.js: hash range of 02_demand = A2:C29 (after 02 loaded from CSV).
+
+### 2026-10-10 — 02_demand loaded from CSV; data-1.2
+- `02_demand` = `data/yearly_demand.csv` entirely (A1:C29). 03!P11:Q38 use year lookups into 02 (verified: 28 years, 0 mismatches vs 02).
+- Update data hash → data_version `data-1.2`, hash f6c10b4a…9159; Check data status: true (code 1.0.0).
+- Pending: Run reference test after push (expected PASS); tag `data-1.2`; commits. Open: last-hour exclusion bug in 01_parameters C4/C5/C7.
