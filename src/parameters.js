@@ -22,8 +22,6 @@ var PARAMETER_TO_VARIABLE_NAME = {
   'storage efficiency': 'storageEfficiency',
   'storage efficiency sqrt': 'storageEfficiencySqrt',
   'storage depth of discharge': 'storageDepthOfDischarge',
-  'max ramp rate gas': 'maxRampRateGas',
-  'min ramp rate gas': 'minRampRateGas',
   'fossil must run': 'mustRun',
   'CO2-ccgt': 'ccgtCo2EmissionFactor',
   'NOX-ccgt': 'ccgtNoxEmissionFactor',

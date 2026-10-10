@@ -17,9 +17,9 @@ const SHEET_DEMAND_INPUT = '02_demand';
 const HOURLY_EXPORTED_COLUMNS = [2, 3, 4, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18];
 
 const DATA_HASH_RANGES = [
-  {sheet: '05_costs', row: 2, col: 1, rows: 65, cols: 8, pick: null},
+  {sheet: '05_costs', row: 2, col: 1, rows: 65, cols: 14, pick: null},
   {sheet: SHEET_DEMAND_INPUT, row: 20, col: 12, rows: 28, cols: 2, pick: null},
-  {sheet: '04_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 18, pick: HOURLY_EXPORTED_COLUMNS}
+  {sheet: '04_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 14, pick: null}
 ];
 
 function _normalizeForHash(v) {

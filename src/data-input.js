@@ -56,18 +56,22 @@ function _readRefYearHoursData() {
   var dataRange = sheet.getRange(2, 1, lastRow-1,lastCol);
   var allValues = dataRange.getValues();
 
-  // Column Projection: Map specific source columns to a cleaned array structure.
-  // WARNING: Relies on fixed column indices. Changing the source sheet layout will break this.
+  // Column Projection: the sheet is loaded from data/hourly_demand23.csv (14 columns, header row 1):
+  // day,month,year,time,hour_of_year,total_generation_mw,must_run_mw,solar_mw,gas_mw,fossil_mw,gas_share,wind_mw,...
+  // Output row: [day, month, year, time, hourOfYear, totalGen, solarGen, fossilGen, windGen]
+  if (String(sheet.getRange(1, 1).getValue()).trim() !== 'day') {
+    throw new Error(SHEET_REF_YEAR_HOURLY + ' is not in the data layout (A1 must be "day"). Load data/hourly_demand23.csv.');
+  }
   return allValues.map(val=> [
-      val[1], 
-      val[2], 
-      val[3],
-      String(val[5]).substring(16,25),
-      val[6],
+      val[0],
+      val[1],
+      val[2],
+      String(val[3]),
+      val[4],
+      val[5],
       val[7],
-      val[11],
-      val[13],
-      val[15]
+      val[9],
+      val[11]
   ])
 }
 

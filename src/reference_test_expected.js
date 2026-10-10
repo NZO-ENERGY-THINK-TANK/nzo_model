@@ -10,8 +10,6 @@ const REFERENCE_EXPECTED = {
     "ccgtSoxEmissionFactor": 0.02,
     "hydrogenEfficenty": 0.5,
     "interestRate": 0.06,
-    "maxRampRateGas": 1605,
-    "minRampRateGas": -1598,
     "solarCapacityRefYear": 4844.887647058824,
     "solarKwToKwhYearly": 1700,
     "totalEnergyDemandYearlyRefYear": 76997689,
