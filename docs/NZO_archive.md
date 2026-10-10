@@ -243,3 +243,21 @@
 - `src/data-input.js`: new `_readYearlyTable(sheet, columns)` (by header name); `futureDemandForecast()` reads demand from `02_demand` (scenario from `01_parameters` 'demand-scenario' via `DEMAND_SCENARIO_COLUMNS`: Noga conservative → noga23_conservative_twh, Noga BAU → noga23_bau_twh) and mustRun from `03_must_run_yearly`. Clear errors for unknown scenario, missing column or missing year. Removed `SHEET_FUTURE_YEARLY_DEMAND` and the fixed-row logic.
 - `data-meta.js`: `SHEET_MUST_RUN_INPUT='03_must_run_yearly'`; hash ranges: 02 A2:C29, 03_must_run_yearly A2:B29.
 - Order to apply: create tab `03_must_run_yearly` and import must_run_yearly.csv → clasp push → reference test (expect PASS) → Update data hash (data-1.3) → then delete old 03_future-yearly-demand (backup first, approval; also fix 01!C2 scenario mapping is by name so no change needed).
+
+### 2026-10-10 — 03_future-yearly-demand deleted (by David); data-1.3
+- Tab deleted after the code moved to `02_demand` + `03_must_run_yearly`. Backup: sheet copy made earlier today; scenario values in NZO_removed_code.md. `_meta`: data-1.3, hash 87dc6d93…2848, status TRUE.
+- Pending: reference test after deletion; tag data-1.3 (git tag shows only data-1.0).
+
+### 2026-10-10 — PV deployment shares moved to roadmap inputs (30_roadmaps-keyframes); pv-average computed in code (code only, step 1)
+- Decision (David): the split between PV types is a scenario input, not a cost assumption. Sum != 1 → error. Existing keyframe rows get 0.2/0.2/0.3/0.3. `32_saved-roadmaps` to be deleted (old layout). Column names: pvShareResidential, pvShareCommercial, pvShareUtility, pvShareDualUse.
+- `year-state.js`: 4 new keyframe columns appended to `KEYFRAME_HEADERS` (O–R in sheet 30), defaults in `DEFAULT_YEAR_STATE_PARAMS`, included in `YearStateParams.toList()`; new `YearState.pvAverage(costsDb, 'capex'|'opex'|'lifetime')` = Σ share × cost of pv-residential/commercial/utility/dual-use for that year; throws on shares not summing to 1 (1e-6) or invalid. The four `costsDb.get('pv-average', …)` calls replaced. `YearStateParams` now keeps an explicit 0 (isNull instead of `||`; side effect: storageEfficiency/DoD of 0 no longer fall back to defaults).
+- `reference_test.js`: REFERENCE_KEYFRAMES rows extended with 0.2,0.2,0.3,0.3 (expected results unchanged).
+- Sheet steps: add O1:R1 headers + values to 30_roadmaps-keyframes (rows 2–61) → clasp push → reference test (expect PASS).
+- Next: remove PV-Average rows 19–22 and share-of-deployment rows 15–18 from 05_costs/costs.csv (code no longer reads them), delete 32_saved-roadmaps (backup + approval), update README.
+- Sheet step done (by Claude, at David's request): 30_roadmaps-keyframes O1:R1 headers + O2:R61 = 0.2/0.2/0.3/0.3 (60 rows verified). Next: clasp push → reference test.
+
+### 2026-10-10 — PV shares and pv-average rows out of costs data; reference PASS after pvAverage
+- Reference test PASS after the pvAverage / pvShare change (results identical).
+- `data/costs.csv`: removed the 4 `share-of-deployment` rows → 55 data rows. README updated.
+- Pending in sheet 05_costs: delete rows 15–22 (share-of-deployment 15–18, PV-Average 19–22; code no longer reads them) and `emissions, combined` (old row 41); then hash range `05_costs` rows must equal CSV rows (55) → update data-meta.js; Update data hash (data-1.4). NOTE: readTableFromSheet stops at the first blank product cell, so rows must be deleted, not cleared.
+- DONE (by Claude, at David's request): 05_costs rows deleted — `emissions, combined` and rows 15–22 (shares + PV-Average). Sheet now has 55 data rows (sheet rows 3–57), keys and order identical to costs.csv (verified). data-meta.js: hash range 05_costs = A2:N57 (56 rows incl. header row). Next: clasp push → reference test → Update data hash (data-1.4) → commit + tag.

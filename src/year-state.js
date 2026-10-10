@@ -16,7 +16,11 @@ var DEFAULT_YEAR_STATE_PARAMS = {
   'hydrogenStorage': 0,
   'nuclearCapacity':0,
   'dfsHoursPerYear':0,
-  'dfsReductionPerHour':0
+  'dfsReductionPerHour':0,
+  'pvShareResidential':0.2,
+  'pvShareCommercial':0.2,
+  'pvShareUtility':0.3,
+  'pvShareDualUse':0.3
 };
 
 /**
@@ -41,7 +45,8 @@ class YearStateParams{
       // If the 'raw' input has the value, use it.
       // Otherwise, fall back to the safe default value.
       // This prevents "undefined" errors deep inside the simulation engine.
-      this[k] = raw[k] || DEFAULT_YEAR_STATE_PARAMS[k];
+      // (isNull, not ||: an explicit 0 must be kept, e.g. a PV share of 0)
+      this[k] = isNull(raw[k]) ? DEFAULT_YEAR_STATE_PARAMS[k] : raw[k];
     }
     // DYNAMIC NAMING CONVENTION:
     // If the user didn't provide a specific name, generate a technical ID.
@@ -74,8 +79,11 @@ class YearStateParams{
       this.dfsReductionPerHour,
       this.wasteToEnergyCapacity,
       this.hydrogenImportCapacity,
-      this.hydrogenProductionCapacity
-      
+      this.hydrogenProductionCapacity,
+      this.pvShareResidential,
+      this.pvShareCommercial,
+      this.pvShareUtility,
+      this.pvShareDualUse
     ];
   }
 }
@@ -202,7 +210,11 @@ var KEYFRAME_HEADERS = [
   'dfsReductionPerHour',
   'wasteToEnergyCapacity',
   'hydrogenImportCapacity',
-  'hydrogenProductionCapacity'
+  'hydrogenProductionCapacity',
+  'pvShareResidential',
+  'pvShareCommercial',
+  'pvShareUtility',
+  'pvShareDualUse'
 ];
 
 //--------------------------------------------------------------------------------------------------
@@ -249,6 +261,34 @@ class YearState{
     }
   }
   
+  /**
+   * Weighted average of a PV cost parameter (capex / opex / lifetime) over the four PV types,
+   * weighted by this year's deployment shares (roadmap inputs pvShare*).
+   * Throws if the shares do not sum to 1.
+   */
+  pvAverage(costsDb, parameter) {
+    var types = [
+      ['pv-residential', this.pvShareResidential],
+      ['pv-commercial', this.pvShareCommercial],
+      ['pv-utility', this.pvShareUtility],
+      ['pv-dual-use', this.pvShareDualUse]
+    ];
+    var total = 0;
+    var weighted = 0;
+    for (var i = 0; i < types.length; ++i) {
+      var share = types[i][1];
+      if (typeof share !== 'number' || isNaN(share) || share < 0) {
+        throw new Error('Invalid PV share for ' + types[i][0] + ' in roadmap ' + this.name + ', year ' + this.year + ': ' + share);
+      }
+      total += share;
+      weighted += share * costsDb.get(types[i][0], parameter, this.year);
+    }
+    if (Math.abs(total - 1) > 1e-6) {
+      throw new Error('PV shares must sum to 1 (roadmap ' + this.name + ', year ' + this.year + '): sum=' + total);
+    }
+    return weighted;
+  }
+
   /**
    * Vectorization Utility.
    * Converts the scenario object into a numerical array (Vector).
@@ -349,7 +389,7 @@ class YearState{
     // 3. Lifecycle Management (The Ledger)
     // We calculate when these new assets will die, and book the cost in the future replacement ledger.
     let storageNextLifeTime=this.year+costsDb.get('storage', 'lifetime', this.year);
-    let solarNextLifeTime=this.year+Math.floor(costsDb.get('pv-average', 'lifetime', this.year));
+    let solarNextLifeTime=this.year+Math.floor(this.pvAverage(costsDb, 'lifetime'));
     let windNextLifeTime=this.year+costsDb.get('wind', 'lifetime', this.year);
     let gasNextLifeTime=this.year+costsDb.get('ccgt', 'lifetime', this.year);
     let nuclearLifeTime=this.year+costsDb.get('nuclear','lifetime',this.year);
@@ -375,11 +415,11 @@ class YearState{
     this.solarCapex = (
       -1 * PMT(
           costsDb.get('financial', 'wacc', this.year),
-          costsDb.get('pv-average', 'lifetime', this.year),
-          costsDb.get('pv-average', 'capex', this.year) * this.newSolarCapacity * 1000
+          this.pvAverage(costsDb, 'lifetime'),
+          this.pvAverage(costsDb, 'capex') * this.newSolarCapacity * 1000
         ) 
       + previousYear.solarCapex);
-    this.solarOpex = this.solarCapacity * 1000 * costsDb.get('pv-average', 'opex', this.year);
+    this.solarOpex = this.solarCapacity * 1000 * this.pvAverage(costsDb, 'opex');
     this.solarTotal = this.solarCapex + this.solarOpex;
     
     // --- WIND // --- WIND ---// --- WIND ---// --- WIND ---// --- WIND ---

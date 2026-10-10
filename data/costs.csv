@@ -11,10 +11,6 @@ PV-Utility,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
 PV-Dual-Use,Capex,,ils/kw,"Construction only, for Roads, Agro,etc...",linear,1250,0,0,0,0,0,0,0
 PV-Dual-Use,Opex,,ils/kw/y,,linear,52.32153735,0,0,-0.19318181818181823,-0.2727272727272727,-0.3352272727272728,-0.3920454545454546,-0.44318181818181823
 PV-Dual-Use,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
-PV-Residential,share-of-deployment,,%,,none,0.2,,,,,,,
-PV-Commercial,share-of-deployment,,%,,none,0.2,,,,,,,
-PV-Utility,share-of-deployment,,%,,none,0.3,,,,,,,
-PV-Dual-Use,share-of-deployment,,%,,none,0.3,,,,,,,
 Wind,CAPEX,,ils/kw,,linear,4727,0,-0.06,-0.15,-0.2,-0.24,-0.29,-0.33
 Wind,OPEX,,ils/kw/y,,linear,80.35868372,0,-0.04,-0.1,-0.13,-0.16,-0.19,-0.22
 Wind,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
