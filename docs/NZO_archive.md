@@ -236,3 +236,10 @@
 - `02_demand` = `data/yearly_demand.csv` entirely (A1:C29). 03!P11:Q38 use year lookups into 02 (verified: 28 years, 0 mismatches vs 02).
 - Update data hash → data_version `data-1.2`, hash f6c10b4a…9159; Check data status: true (code 1.0.0).
 - Pending: Run reference test after push (expected PASS); tag `data-1.2`; commits. Open: last-hour exclusion bug in 01_parameters C4/C5/C7.
+- data/README.md updated: 02 and 04 are loaded whole from CSV.
+
+### 2026-10-10 — futureDemandForecast reads 02_demand + 03_must_run_yearly directly (03_future-yearly-demand no longer needed by code)
+- Decision (David): must-run gets its own CSV, not mixed with demand. `data/yearly_demand.csv` stays 3 columns. New `data/must_run_yearly.csv` (`year,must_run_mw`: 600 for 2023–2039, 0 from 2040; equals old 03!G = SUM(C:F)) → new tab `03_must_run_yearly`.
+- `src/data-input.js`: new `_readYearlyTable(sheet, columns)` (by header name); `futureDemandForecast()` reads demand from `02_demand` (scenario from `01_parameters` 'demand-scenario' via `DEMAND_SCENARIO_COLUMNS`: Noga conservative → noga23_conservative_twh, Noga BAU → noga23_bau_twh) and mustRun from `03_must_run_yearly`. Clear errors for unknown scenario, missing column or missing year. Removed `SHEET_FUTURE_YEARLY_DEMAND` and the fixed-row logic.
+- `data-meta.js`: `SHEET_MUST_RUN_INPUT='03_must_run_yearly'`; hash ranges: 02 A2:C29, 03_must_run_yearly A2:B29.
+- Order to apply: create tab `03_must_run_yearly` and import must_run_yearly.csv → clasp push → reference test (expect PASS) → Update data hash (data-1.3) → then delete old 03_future-yearly-demand (backup first, approval; also fix 01!C2 scenario mapping is by name so no change needed).

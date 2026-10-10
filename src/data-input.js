@@ -1,5 +1,9 @@
 const SHEET_REF_YEAR_HOURLY = '04_raw-data-hourly'
-const SHEET_FUTURE_YEARLY_DEMAND = '03_future-yearly-demand'
+// Demand scenario names (01_parameters 'demand-scenario') -> column header in 02_demand (data/yearly_demand.csv)
+const DEMAND_SCENARIO_COLUMNS = {
+  'Noga conservative': 'noga23_conservative_twh',
+  'Noga BAU': 'noga23_bau_twh'
+};
 
 /**
  * Data Aggregator: Fetches and consolidates all necessary simulation inputs.
@@ -76,30 +80,55 @@ function _readRefYearHoursData() {
 }
 
 /**
- * Reads the long-term electricity demand forecast (e.g., 2023-2050).
- * Parses the data into a Year-indexed lookup object for easy retrieval.
- * * @return {Object} A map structure: { Year: { demand, mustRun } }
+ * Reads a yearly table (header in row 1, loaded from a CSV in data/) into { year: { column: value } }.
+ * Columns are located by header name, so their order does not matter.
+ * @private
+ */
+function _readYearlyTable(sheetName, requiredColumns) {
+  var sheet = getSheet(sheetName);
+  var values = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+  var headers = values.shift();
+  var idx = {};
+  ['year'].concat(requiredColumns).forEach(function(name) {
+    idx[name] = headers.indexOf(name);
+    if (idx[name] < 0) {
+      throw new Error(sheetName + ' is missing column "' + name + '". Load the matching CSV from data/.');
+    }
+  });
+  var table = {};
+  values.forEach(function(row) {
+    var entry = {};
+    requiredColumns.forEach(function(name) { entry[name] = row[idx[name]]; });
+    table[row[idx['year']]] = entry;
+  });
+  return table;
+}
+
+/**
+ * Reads the long-term electricity demand forecast (2023-2050) from 02_demand (data/yearly_demand.csv)
+ * and the must-run capacity from 03_must_run_yearly (data/must_run_yearly.csv).
+ * The demand scenario is chosen by 01_parameters 'demand-scenario' and mapped by DEMAND_SCENARIO_COLUMNS.
+ * * @return {Object} A map structure: { Year: { demand (MWh), mustRun (MW) } }
  */
 function futureDemandForecast() {
-  var futureYearlyDemandSheet = SpreadsheetApp.getActive().getSheetByName(SHEET_FUTURE_YEARLY_DEMAND);
-  
-  // Define the simulation timeframe
-  var [firstYear, lastYear] = [2023, 2050]
-  
-  // OFFSET CALCULATION:
-  // We assume the data for the base year (2020) starts exactly at Row 8.
-  // WARNING: Adding rows to the sheet header will break this logic.
-  var firstRow = 8 + (firstYear-2020)
-  var numOfRows = (lastYear -firstYear) + 1
-  var rawData = futureYearlyDemandSheet.getRange(firstRow, 1, numOfRows, 8).getValues();
+  var scenarioRow = readParams().filter(function(row) { return row[0] === 'demand-scenario'; })[0];
+  var scenario = scenarioRow ? scenarioRow[2] : undefined;
+  var demandColumn = DEMAND_SCENARIO_COLUMNS[scenario];
+  if (!demandColumn) {
+    throw new Error("Unknown demand-scenario '" + scenario + "'. Expected one of: " + Object.keys(DEMAND_SCENARIO_COLUMNS).join(', '));
+  }
+  var demand = _readYearlyTable(SHEET_DEMAND_INPUT, [demandColumn]);
+  var mustRun = _readYearlyTable(SHEET_MUST_RUN_INPUT, ['must_run_mw']);
 
   var futureForecast = {};
-  rawData.forEach(function(row) {
-    futureForecast[row[0]] = { //by year
-      // UNIT CONVERSION:
-      // Convert Sheet Units (TWh) to Model Units (MWh).
-      'demand': row[1] * 1000000, //according to the selected demand model: NZO/ rashut Hahashmal/ noga bau, etc.
-      'mustRun': row[6]
+  Object.keys(demand).forEach(function(year) {
+    if (!(year in mustRun)) {
+      throw new Error(SHEET_MUST_RUN_INPUT + ' has no row for year ' + year);
+    }
+    futureForecast[year] = { //by year
+      // UNIT CONVERSION: Sheet Units (TWh) to Model Units (MWh).
+      'demand': demand[year][demandColumn] * 1000000,
+      'mustRun': mustRun[year]['must_run_mw']
     }
   });
   return futureForecast
