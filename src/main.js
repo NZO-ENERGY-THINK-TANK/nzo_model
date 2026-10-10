@@ -8,7 +8,11 @@ function onOpen() {
 function onEdit(e) {
   // Only rebuild menu if edit happened in parameters sheet
   if (e.range.getSheet().getName() === SHEET_PARAMETERS) {
-    buildMenu();
+    try {
+      buildMenu();
+    } catch (err) {
+      console.warn('buildMenu failed in onEdit: ' + err);
+    }
   }
 }
 
@@ -24,7 +28,12 @@ function buildMenu() {//saveRoadmap
     // {name: 'sensitivity Analysis', functionName: 'sensitivityAnalysis'},
     // {name: 'stochastic Analysis',functionName: 'stochasticAnalysis'}
   ];
-  spreadsheet.addMenu('NZO Model', menuItems);
+  var menu = SpreadsheetApp.getUi().createMenu('NZO Model');
+  menuItems.forEach(function(item) { menu.addItem(item.name, item.functionName); });
+  menu.addSubMenu(SpreadsheetApp.getUi().createMenu('Advanced')
+    .addItem('Run reference test', 'runReferenceTest')
+    .addItem('Record reference test', 'recordReferenceTest'));
+  menu.addToUi();
 };
 
 
