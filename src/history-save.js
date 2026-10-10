@@ -47,8 +47,13 @@ function logRunToHistory() {
   // --- Build header and data from the same pairs ---
   var pairs = getNameValuePairs(SHEET_PARAMETERS, parameterStartRow, parameterNameColumn, parameterValueColumn)
     .concat(getNameValuePairs(SHEET_SUMMARY, summaryStartRow, summaryNameColumn, summaryValueColumn));
-  var headerRow = ["Timestamp"].concat(pairs.map(function(p) { return p.name; }));
-  var newData = [new Date()].concat(pairs.map(function(p) { return p.value; }));
+  // Run identity (step 6): who, code version, data version, data hash check. Columns follow Timestamp.
+  var runMeta = getRunMetadata();
+  var metaNames = ['run_id', 'researcher', 'code_version', 'data_version', 'data_hash_match'];
+  var headerRow = ["Timestamp"].concat(metaNames, pairs.map(function(p) { return p.name; }));
+  var newData = [new Date()].concat(
+    metaNames.map(function(n) { return runMeta[n]; }),
+    pairs.map(function(p) { return p.value; }));
 
   // --- Find the last header row ("Timestamp" in column A) and compare it with the new layout ---
   var lastRow = historySheet.getLastRow();
@@ -120,26 +125,43 @@ function saveRoadmapToSheet(ss,saveSheet) {
   }
 
   var stamp = nameInput;
-  var filtered = values.filter(function(row, i){
-    if (nextRow == 1 && i === 0) return true; // headers only in first run
-    return norm(row[0]) === norm(chosen);
-  });
 
-  if (nextRow == 1) {
-    // adding timestamp
-    var headerWithStamp = ["Saved at"].concat(header);
-    filtered[0] = headerWithStamp;
+  // Optional free-text description (what was tried and why), saved with the roadmap.
+  var descResp = ui.prompt("description (optional)", "What did you try, and why?", ui.ButtonSet.OK_CANCEL);
+  if (descResp.getSelectedButton() !== ui.Button.OK) {
+    ui.alert("cancel.");
+    return;
+  }
+  var description = (descResp.getResponseText() || "").trim();
 
-    for (var r = 1; r < filtered.length; r++) {
-      filtered[r].unshift(stamp);
-    }
-  } else {
-    for (var r = 0; r < filtered.length; r++) {
-      filtered[r].unshift(stamp);
+  // Run identity (step 6): who, code version, data version, data hash check.
+  var runMeta = getRunMetadata();
+  var metaNames = ['run_id', 'researcher', 'code_version', 'data_version', 'data_hash_match'];
+  var prefix = [stamp].concat(metaNames.map(function(n) { return runMeta[n]; }), [description]);
+  var headerRow = ["Saved at"].concat(metaNames, ["description"], header);
+
+  // Add a header row when the sheet is empty or the last header differs from the new layout
+  // (never inserted over existing rows).
+  var needHeader = true;
+  if (nextRow > 1) {
+    var colA = saveSheet.getRange(1, 1, nextRow - 1, 1).getValues();
+    for (var h = colA.length - 1; h >= 0; h--) {
+      if (colA[h][0] === "Saved at") {
+        var lastHeader = saveSheet.getRange(h + 1, 1, 1, headerRow.length).getValues()[0];
+        needHeader = lastHeader.join('|') !== headerRow.join('|');
+        break;
+      }
     }
   }
 
-  saveSheet.getRange(nextRow, 1, filtered.length, filtered[0].length).setValues(filtered);
+  var out = [];
+  if (needHeader) out.push(headerRow);
+  values.forEach(function(row, i) {
+    if (i === 0) return; // source header
+    if (norm(row[0]) === norm(chosen)) out.push(prefix.concat(row));
+  });
+
+  saveSheet.getRange(nextRow, 1, out.length, out[0].length).setValues(out);
 
 }
 

@@ -32,7 +32,10 @@ function buildMenu() {//saveRoadmap
   menuItems.forEach(function(item) { menu.addItem(item.name, item.functionName); });
   menu.addSubMenu(SpreadsheetApp.getUi().createMenu('Advanced')
     .addItem('Run reference test', 'runReferenceTest')
-    .addItem('Record reference test', 'recordReferenceTest'));
+    .addItem('Record reference test', 'recordReferenceTest')
+    .addSeparator()
+    .addItem('Update data hash', 'updateDataHash')
+    .addItem('Check data status', 'checkDataStatus'));
   menu.addToUi();
 };
 
