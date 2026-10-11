@@ -1299,3 +1299,26 @@ function resetCellColors() {
   console.log('resetCellColors: cleared ' + sheets.length + ' tabs');
 }
 ```
+
+## 2026-10-11 — separate color legend (design-scheme.js)
+Replaced by group header rows in the tab list of 00_documentation.
+
+```js
+const DESIGN_LEGEND_ANCHOR = {row: 1, col: 1};
+function _writeDesignLegend(ss) {
+  var sheet = ss.getSheetByName(DESIGN_LEGEND_SHEET);
+  if (!sheet) return;
+  var keys = Object.keys(DESIGN_ROLES);
+  var rows = [['מקרא צבעי הלשוניות', '']];
+  keys.forEach(function(k) { rows.push([DESIGN_ROLES[k].label, DESIGN_ROLES[k].note]); });
+  var a = DESIGN_LEGEND_ANCHOR;
+  var range = sheet.getRange(a.row, a.col, rows.length, 2);
+  range.setValues(rows);
+  sheet.getRange(a.row, a.col, 1, 2).setFontWeight('bold');
+  keys.forEach(function(k, i) {
+    var cell = sheet.getRange(a.row + 1 + i, a.col);
+    cell.setBackground(DESIGN_ROLES[k].color).setFontColor('#ffffff').setFontWeight('bold');
+  });
+}
+
+```

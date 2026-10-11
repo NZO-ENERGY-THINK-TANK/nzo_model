@@ -39,7 +39,6 @@ const DESIGN_CALCULATED_CELLS = {
   '20_parameters': ['C4', 'C5', 'C7', 'C9', 'C10', 'C24:C26', 'C29']
 };
 
-// Where the color legend is written in 00_documentation: A1:B7 (7 rows x 2 columns; the area must be empty).
 // Tab order: documentation, researcher inputs, outputs and charts (+ run history), base data, system.
 const DESIGN_TAB_ORDER = [
   '00_documentation',
@@ -51,7 +50,6 @@ const DESIGN_TAB_ORDER = [
 ];
 
 const DESIGN_LEGEND_SHEET = '00_documentation';
-const DESIGN_LEGEND_ANCHOR = {row: 1, col: 1};
 
 const DESIGN_CALCULATED_BACKGROUND = '#efefef';
 const DESIGN_PROTECTION_TAG = 'NZO design scheme';
@@ -76,7 +74,7 @@ function designSchemeDryRun() {
   return lines;
 }
 
-/** Applies tab colors, warning-only protections, calculated-cell look and the legend. Idempotent. */
+/** Applies tab colors, warning-only protections, calculated-cell look, menu docs, run guide and the tab list (with the color legend as group headers). Idempotent. */
 function applyDesignScheme() {
   var ss = SpreadsheetApp.getActive();
   ss.getSheets().forEach(function(sheet) {
@@ -101,7 +99,7 @@ function applyDesignScheme() {
       p.setWarningOnly(true);
     });
   });
-  _writeDesignLegend(ss);
+  _migrateLegendLayout(ss);
   _writeMenuDocs(ss);
   _writeRunGuide(ss);
   _writeSheetsTable(ss);
@@ -130,24 +128,19 @@ function _clearDesignProtections(sheet) {
   });
 }
 
-function _writeDesignLegend(ss) {
+// One-time migration from the old layout (color legend at A1:B7, menu docs at A9, run guide at A19): the legend is
+// now part of the tab list (group header rows), and menu docs and run guide moved up. Detected by the old legend title.
+const DESIGN_OLD_LEGEND_TITLE = 'מקרא צבעי הלשוניות';
+function _migrateLegendLayout(ss) {
   var sheet = ss.getSheetByName(DESIGN_LEGEND_SHEET);
-  if (!sheet) return;
-  var keys = Object.keys(DESIGN_ROLES);
-  var rows = [['מקרא צבעי הלשוניות', '']];
-  keys.forEach(function(k) { rows.push([DESIGN_ROLES[k].label, DESIGN_ROLES[k].note]); });
-  var a = DESIGN_LEGEND_ANCHOR;
-  var range = sheet.getRange(a.row, a.col, rows.length, 2);
-  range.setValues(rows);
-  sheet.getRange(a.row, a.col, 1, 2).setFontWeight('bold');
-  keys.forEach(function(k, i) {
-    var cell = sheet.getRange(a.row + 1 + i, a.col);
-    cell.setBackground(DESIGN_ROLES[k].color).setFontColor('#ffffff').setFontWeight('bold');
-  });
+  if (!sheet || sheet.getRange(1, 1).getValue() !== DESIGN_OLD_LEGEND_TITLE) return;
+  sheet.getRange(1, 1, 7, 2).clear();   // old legend
+  sheet.getRange(9, 1, 9, 3).clear();   // old menu docs
+  sheet.getRange(19, 1, 10, 2).clear(); // old run guide
 }
 
-// Menu documentation written to 00_documentation below the legend. Keep in sync with buildMenu() in main.js.
-const DESIGN_MENU_DOCS_ANCHOR = {row: 9, col: 1};
+// Menu documentation written to 00_documentation (A1 and down). Keep in sync with buildMenu() in main.js.
+const DESIGN_MENU_DOCS_ANCHOR = {row: 1, col: 1};
 const DESIGN_MENU_DOCS = [
   ['תפריט NZO Model', 'מה הפעולה עושה', 'לשוניות שמתעדכנות'],
   ['Predict Year', 'מריצה את המודל השנתי לשנה שב-20_parameters!C8: תמהיל ייצור, אחוז מתחדשות, פליטות', '42_hourly-predicted, 41_daily-predicted, 40_year-summary, 90_run-history'],
@@ -168,8 +161,8 @@ function _writeMenuDocs(ss) {
   sheet.getRange(a.row, a.col, 1, 3).setFontWeight('bold');
 }
 
-// Run guide written to 00_documentation below the menu documentation (A19 and down).
-const DESIGN_RUN_GUIDE_ANCHOR = {row: 19, col: 1};
+// Run guide written to 00_documentation below the menu documentation (A11 and down).
+const DESIGN_RUN_GUIDE_ANCHOR = {row: 11, col: 1};
 const DESIGN_RUN_GUIDE = [
   ['ארבעה שלבים להרצה', ''],
   ['1. קלט', 'ערוך רק לשוניות כחולות: 20_parameters ו-21_scenarios-keyframes'],
@@ -194,27 +187,31 @@ function _writeRunGuide(ss) {
 // Tab list in 00_documentation: found by the header cell 'גליונות' in column A. The first row below the
 // 'שם/תאור' header (external link to Noga's forecast) is kept; the rows after it are rewritten.
 const DESIGN_SHEETS_HEADER = 'גליונות';
-const DESIGN_SHEETS_OLD_ROWS = 20; // extent of the old table that is cleared before writing
+const DESIGN_SHEETS_OLD_ROWS = 34; // extent of the table area that is cleared before writing
+// Each group starts with a header row (role label + note, colored with the role color), followed by its tabs.
 const DESIGN_SHEETS_TABLE = [
-  ['20_parameters', 'input', 'נתוני קלט ידניים. למשל השנה שעבורה יש להריץ את המודל'],
-  ['21_scenarios-keyframes', 'input', 'קלט ערכים באינטרוולים לחילוץ scenarios'],
-  null,
-  ['30_costs-forecast', 'output', 'תחזית מחירים שנתית - קלט למודל'],
-  ['40_year-summary', 'output', 'תוצאות החישוב של המודל השנתי'],
-  ['41_daily-predicted', 'output', 'ביקוש יומי - מודל שנתי'],
-  ['42_hourly-predicted', 'output', 'ביקוש שעתי - מודל שנתי'],
-  ['50_scenarios-yearly', 'output', 'scenarios מחוללים לפי התרחישים עם מדדים ברמה שנתית'],
-  ['60_daily-chart', 'charts', 'גרף ביקוש וייצור יומי'],
-  ['61_yearly-chart', 'charts', 'גרף שנתי - לנתוני המודל השנתי'],
-  ['90_run-history', 'saved', 'יומן המתעד את הרצות המודל השנתי'],
-  null,
-  ['10_demand-yearly', 'base', 'ביקוש שנתי (TWh) לפי תרחיש, 2023-2050. מקור: תחזית נוגה. נטען מ-data/yearly_demand.csv'],
-  ['11_must-run-yearly', 'base', 'קיבולת must-run (MW) לפי שנה. נטען מ-data/must_run_yearly.csv'],
-  ['12_raw-data-hourly', 'base', 'נתונים שעתיים לשנת ייחוס 2023. מקור: דו"ח מצב משק החשמל. נטען מ-data/hourly_demand23.csv'],
-  ['13_costs', 'base', 'עלויות וירידת מחירים (הערכות ומחקרים, בהם Bloomberg). נטען מ-data/costs.csv'],
-  null,
-  ['_meta', 'status', 'גרסת נתונים וחתימה (hash)'],
-  ['_status', 'status', 'סטטוס בדיקת נתונים וגרסאות']
+  {role: 'input', tabs: [
+    ['20_parameters', 'נתוני קלט ידניים. למשל השנה שעבורה יש להריץ את המודל'],
+    ['21_scenarios-keyframes', 'קלט ערכים באינטרוולים לחילוץ scenarios']]},
+  {role: 'output', tabs: [
+    ['30_costs-forecast', 'תחזית מחירים שנתית - קלט למודל'],
+    ['40_year-summary', 'תוצאות החישוב של המודל השנתי'],
+    ['41_daily-predicted', 'ביקוש יומי - מודל שנתי'],
+    ['42_hourly-predicted', 'ביקוש שעתי - מודל שנתי'],
+    ['50_scenarios-yearly', 'scenarios מחוללים לפי התרחישים עם מדדים ברמה שנתית']]},
+  {role: 'charts', tabs: [
+    ['60_daily-chart', 'גרף ביקוש וייצור יומי'],
+    ['61_yearly-chart', 'גרף שנתי - לנתוני המודל השנתי']]},
+  {role: 'saved', tabs: [
+    ['90_run-history', 'יומן המתעד את הרצות המודל השנתי']]},
+  {role: 'base', tabs: [
+    ['10_demand-yearly', 'ביקוש שנתי (TWh) לפי תרחיש, 2023-2050. מקור: תחזית נוגה. נטען מ-data/yearly_demand.csv'],
+    ['11_must-run-yearly', 'קיבולת must-run (MW) לפי שנה. נטען מ-data/must_run_yearly.csv'],
+    ['12_raw-data-hourly', 'נתונים שעתיים לשנת ייחוס 2023. מקור: דו"ח מצב משק החשמל. נטען מ-data/hourly_demand23.csv'],
+    ['13_costs', 'עלויות וירידת מחירים (הערכות ומחקרים, בהם Bloomberg). נטען מ-data/costs.csv']]},
+  {role: 'status', tabs: [
+    ['_meta', 'גרסת נתונים וחתימה (hash)'],
+    ['_status', 'סטטוס בדיקת נתונים וגרסאות']]}
 ];
 
 function _writeSheetsTable(ss) {
@@ -228,17 +225,20 @@ function _writeSheetsTable(ss) {
   if (header < 0) { console.log("_writeSheetsTable: header '" + DESIGN_SHEETS_HEADER + "' not found in column A, skipped"); return; }
   var start = header + 3;
   doc.getRange(start, 1, DESIGN_SHEETS_OLD_ROWS, 2).clear();
-  DESIGN_SHEETS_TABLE.forEach(function(entry, k) {
-    if (!entry) return;
-    var sheet = ss.getSheetByName(entry[0]);
-    var row = start + k;
-    var cellA = doc.getRange(row, 1);
-    var role = DESIGN_ROLES[entry[1]];
-    var style = SpreadsheetApp.newTextStyle().setForegroundColor('#ffffff').setBold(true).build();
-    var builder = SpreadsheetApp.newRichTextValue().setText(entry[0]);
-    if (sheet) builder.setLinkUrl('#gid=' + sheet.getSheetId());
-    builder.setTextStyle(style);
-    cellA.setRichTextValue(builder.build()).setBackground(role.color);
-    doc.getRange(row, 2).setValue(entry[2]);
+  var row = start;
+  DESIGN_SHEETS_TABLE.forEach(function(group, gi) {
+    if (gi > 0) row++; // blank row between groups
+    var role = DESIGN_ROLES[group.role];
+    doc.getRange(row, 1, 1, 2).setValues([[role.label, role.note]])
+      .setBackground(role.color).setFontColor('#ffffff').setFontWeight('bold');
+    row++;
+    group.tabs.forEach(function(tab) {
+      var sheet = ss.getSheetByName(tab[0]);
+      var builder = SpreadsheetApp.newRichTextValue().setText(tab[0]);
+      if (sheet) builder.setLinkUrl('#gid=' + sheet.getSheetId());
+      doc.getRange(row, 1).setRichTextValue(builder.build());
+      doc.getRange(row, 2).setValue(tab[1]);
+      row++;
+    });
   });
 }
