@@ -16,23 +16,20 @@ function onEdit(e) {
   }
 }
 
-function buildMenu() {//saveRoadmap
+function buildMenu() {
   var spreadsheet = SpreadsheetApp.getActive();
-  var menuItems = [
-    {name: `Predict Year: ${getParameters().currentYear}` , functionName: 'predictYear'},
-    {name: 'Calculate Costs', functionName: 'calculateCosts'},
-    {name: 'Calculate Scenarios and Costs', functionName: 'calculateScenariosAndCosts'},
-    // {name: 'sensitivity Analysis', functionName: 'sensitivityAnalysis'},
-    // {name: 'stochastic Analysis',functionName: 'stochasticAnalysis'}
-  ];
   var menu = SpreadsheetApp.getUi().createMenu('NZO Model');
-  menuItems.forEach(function(item) { menu.addItem(item.name, item.functionName); });
+  menu.addItem(`Predict Year: ${getParameters().currentYear}` , 'predictYear');
+  menu.addItem('Calculate Costs', 'calculateCosts');
+  menu.addItem('Calculate Scenarios and Costs', 'calculateScenariosAndCosts');
   menu.addSubMenu(SpreadsheetApp.getUi().createMenu('Advanced')
     .addItem('Run reference test', 'runReferenceTest')
     .addItem('Record reference test', 'recordReferenceTest')
     .addSeparator()
     .addItem('Update data hash', 'updateDataHash')
-    .addItem('Check data status', 'checkDataStatus'));
+    .addItem('Check data status', 'checkDataStatus')
+    .addSeparator()
+    .addItem('Apply design scheme', 'applyDesignScheme'));
   menu.addToUi();
 };
 
@@ -70,23 +67,41 @@ function calculateCosts() {
 };
 
 /**
- * Batch Processor: Executes simulation and financial analysis for ALL defined roadmaps.
+ * Batch Processor: Executes simulation and financial analysis for ALL defined scenarios.
  * Aggregates results from multiple scenarios into a single master output.
  */
 function calculateScenariosAndCosts() {
+  if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT, SHEET_COSTS_OUTPUT])) return;
   var in_data = getInputData();
-  var roadmaps = readRoadmapsFromKeyframes();
+  var scenarios = readScenariosFromKeyframes();
   var costsDb = getCostsDb();
 
   var allYearStates = []
-  roadmaps.forEach(function(roadmap) {
-    roadmap.simulate(in_data);
-    roadmap.calculateCosts(costsDb, in_data.parameters);
-    allYearStates = allYearStates.concat(roadmap.years);
+  scenarios.forEach(function(scenario) {
+    scenario.simulate(in_data);
+    scenario.calculateCosts(costsDb, in_data.parameters);
+    allYearStates = allYearStates.concat(scenario.years);
   });
-  // Flatten results: Append current roadmap's scenarios to the master list
+  // Flatten results: Append current scenario's year states to the master list
 
   saveYearStatesOutput(allYearStates);
   saveCosts(costsDb);
   SpreadsheetApp.flush();
 };
+
+/**
+ * Asks the user to confirm before an action overwrites output tabs.
+ * Returns true to continue. Without a UI (editor run, trigger) it continues, so unattended runs are not blocked.
+ */
+function confirmOverwrite(sheetNames) {
+  var ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    return true;
+  }
+  var answer = ui.alert('אישור דריסה',
+    'הפעולה תכתוב מחדש את הלשוניות:\n' + sheetNames.join('\n') + '\n\nלהמשיך?',
+    ui.ButtonSet.YES_NO);
+  return answer === ui.Button.YES;
+}

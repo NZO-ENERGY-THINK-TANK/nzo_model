@@ -1,5 +1,5 @@
-const SHEET_ROADMAP_KEYFRAMES = '30_roadmaps-keyframes'
-const SHEET_YEAR_STATES_OUTPUT = '31_roadmaps-yearly-output'
+const SHEET_SCENARIO_KEYFRAMES = '21_scenarios-keyframes'
+const SHEET_YEAR_STATES_OUTPUT = '50_scenarios-yearly'
 
 var DEFAULT_YEAR_STATE_PARAMS = {
   'year': 2050,
@@ -24,12 +24,12 @@ var DEFAULT_YEAR_STATE_PARAMS = {
 };
 
 /**
- * Scenario Parameters Data Transfer Object (DTO).
+ * Year state Parameters Data Transfer Object (DTO).
  * Acts as the configuration blueprint for a single simulation run.
  * * Responsibilities:
- * 1. Standardization: Ensures every scenario has a complete set of parameters.
+ * 1. Standardization: Ensures every yearState has a complete set of parameters.
  * 2. Robustness: Implements a "Fallback Mechanism" using DEFAULT_YEAR_STATE_PARAMS to handle missing inputs.
- * 3. Identification: Auto-generates descriptive IDs for unnamed scenarios based on their physical attributes.
+ * 3. Identification: Auto-generates descriptive IDs for unnamed yearStates based on their physical attributes.
  * * @param {Object} raw - The raw input object (potentially partial data).
  */
 class YearStateParams{
@@ -51,9 +51,9 @@ class YearStateParams{
     // DYNAMIC NAMING CONVENTION:
     // If the user didn't provide a specific name, generate a technical ID.
     // Format: "R-[Solar]-[Wind]-[Storage]" (Normalized units).
-    // This allows easy identification of scenario characteristics just by looking at the name.
+    // This allows easy identification of yearState characteristics just by looking at the name.
     if (isNull(this.name)) {
-      // TODO: refactor name to roadmapName. generate it in Roadmap class
+      // TODO: refactor name to scenarioName. generate it in Scenario class
       this.name = "R-" + (this.solarCapacity/1000) + "-" + (this.windCapacity/100) + "-" + (this.storageEnergy/1000);
     }
   }
@@ -263,7 +263,7 @@ class YearState{
   
   /**
    * Weighted average of a PV cost parameter (capex / opex / lifetime) over the four PV types,
-   * weighted by this year's deployment shares (roadmap inputs pvShare*).
+   * weighted by this year's deployment shares (scenario inputs pvShare*).
    * Throws if the shares do not sum to 1.
    */
   pvAverage(costsDb, parameter) {
@@ -278,7 +278,7 @@ class YearState{
     for (var i = 0; i < types.length; ++i) {
       var share = types[i][1];
       if (typeof share !== 'number' || isNaN(share) || share < 0) {
-        throw new Error('Invalid PV share for ' + types[i][0] + ' in roadmap ' + this.name + ', year ' + this.year + ': ' + share);
+        throw new Error('Invalid PV share for ' + types[i][0] + ' in scenario ' + this.name + ', year ' + this.year + ': ' + share);
       }
       total += share;
       var value = costsDb.get(types[i][0], parameter, this.year);
@@ -290,14 +290,14 @@ class YearState{
       weighted += share * value;
     }
     if (Math.abs(total - 1) > 1e-6) {
-      throw new Error('PV shares must sum to 1 (roadmap ' + this.name + ', year ' + this.year + '): sum=' + total);
+      throw new Error('PV shares must sum to 1 (scenario ' + this.name + ', year ' + this.year + '): sum=' + total);
     }
     return weighted;
   }
 
   /**
    * Vectorization Utility.
-   * Converts the scenario object into a numerical array (Vector).
+   * Converts the yearState object into a numerical array (Vector).
    * Required for the mathematical interpolation function.
    */
   toVector() {
@@ -316,22 +316,22 @@ class YearState{
 
   /**
    * Linear Interpolation Engine.
-   * Fills the gap between the current scenario (e.g., 2030) and a target scenario (e.g., 2035).
+   * Fills the gap between the current yearState (e.g., 2030) and a target yearState (e.g., 2035).
    * Creates the "missing years" assuming a linear growth trajectory.
    * * @param {YearState} olderYearState - The starting point (Year X).
-   * @returns {Array<YearState>} - The list of generated scenarios for Years X+1 to Y-1.
+   * @returns {Array<YearState>} - The list of generated yearStates for Years X+1 to Y-1.
    */
   interpolate(olderYearState) {
     var interpolated = [];
     // Validation: Ensure time moves forward
     if (olderYearState !== null && this.year >= olderYearState.year + 1) {
       if (olderYearState.name !== this.name) {
-        throw "failed interpolating scenarios of different name: older=" + olderYearState.name + " current=" + this.name;
+        throw "failed interpolating yearStates of different name: older=" + olderYearState.name + " current=" + this.name;
       }
       var pointA = olderYearState.toVector();
       var pointB = this.toVector();
       if (pointA.length !== pointB.length) {
-        throw "trying to interpolate scenarios of different type. pointA.length=" + pointA.length + " pointB.length=" + pointB.length;
+        throw "trying to interpolate yearStates of different type. pointA.length=" + pointA.length + " pointB.length=" + pointB.length;
       }
       // Math: Generate intermediate points
       var newPoints = interpolate([pointA, pointB]);
@@ -577,37 +577,37 @@ var ZERO_YEAR_STATE = new YearState(
                                   );  
 
 /**
- * Manual Roadmap Loader & Interpolator.
+ * Manual Scenario Loader & Interpolator.
  * Reads user-defined milestones from the input sheet and reconstructs the full timeline.
  * * Engineering Concept: "Keyframe Interpolation" / "Piecewise Linear Construction"
  * Instead of defining every single year manually, the user defines 'Key Years' (Nodes).
  * This function iterates through these nodes and generates the intermediate years 
  * to create a continuous, year-by-year simulation trajectory.
- * * @returns {Array<Roadmap>} - Structured Roadmap objects ready for simulation.
+ * * @returns {Array<Scenario>} - Structured Scenario objects ready for simulation.
  */
-function readRoadmapsFromKeyframes() {
+function readScenariosFromKeyframes() {
   // 1. Raw Data Ingestion
-  var rows = readTableFromSheet(SHEET_ROADMAP_KEYFRAMES, 1, KEYFRAME_HEADERS);
-  var scenarios = [];
+  var rows = readTableFromSheet(SHEET_SCENARIO_KEYFRAMES, 1, KEYFRAME_HEADERS);
+  var yearStates = [];
   var lastYearState = null;
   // 2. Sequential Processing
   rows.forEach(function(r) {
     // Create the current node (Node B)
-    var currentYearState = new YearState(r, KEYFRAME_HEADERS);//creating a scenario
+    var currentYearState = new YearState(r, KEYFRAME_HEADERS);//creating a yearState
     // 3. Gap Filling (The Bridge)
     // If there is a previous node, calculate all years between Node A and Node B.
     // Example: User defined 2030 and 2040 -> This generates 2031-2039.
-    var interpolatedYearStates = currentYearState.interpolate(lastYearState);//creating scenarios from the current one 
+    var interpolatedYearStates = currentYearState.interpolate(lastYearState);//creating yearStates from the current one 
     // Add the intermediate years to the main list
-    interpolatedYearStates.forEach(function(s) { scenarios.push(s); });
+    interpolatedYearStates.forEach(function(s) { yearStates.push(s); });
     // Add the current explicit node (Keyframe)
-    scenarios.push(currentYearState);
+    yearStates.push(currentYearState);
     // Update cursor for the next iteration
     lastYearState = currentYearState;
   });
   // 4. Factory Assembly
-  // Group the flat list of years into organized Roadmap objects.
-  return groupYearsIntoRoadmaps(scenarios);
+  // Group the flat list of years into organized Scenario objects.
+  return groupYearsIntoScenarios(yearStates);
 }
 
 /**
@@ -616,41 +616,41 @@ function readRoadmapsFromKeyframes() {
  * * Engineering Purpose: "Data Binding"
  * Maps the calculated physical values (Energy flows, Reliability metrics) 
  * into the structural object required for the Financial Analysis phase.
- * * @param {Object} scenario - The persistent container for the specific year (Target).
+ * * @param {Object} yearState - The persistent container for the specific year (Target).
  * @param {Object} year_summary - The transient accumulator object holding hourly simulation totals (Source).
  */
-function _updateYearStateWithResults(scenario, year_summary) {
+function _updateYearStateWithResults(yearState, year_summary) {
   // 1. Generation Mix Mapping (Production)
   // Extracts total MWh produced by each technology.
-  scenario.mustRun = year_summary.mustRun.value;
-  scenario.fossilGeneration = year_summary.fossilGeneration.value
-  scenario.solarGeneration = year_summary.solarGeneration.value;
-  scenario.windGeneration = year_summary.windGeneration.value;
-  scenario.gasInToEnergy = year_summary.gasInToEnergy.value;
-  scenario.solarInToEnergy = year_summary.solarInToEnergy.value;
-  scenario.windInToEnergy = year_summary.windInToEnergy.value;
-  scenario.nuclearInToEnergy = year_summary.nuclearInToEnergy.value;
-  scenario.wasteToEnergyInToEnergy = year_summary.wasteToEnergyInToEnergy.value;
-  scenario.storageUsage = year_summary.storageUtilization.value;
-  scenario.v2gUsage=year_summary.v2gUsage.value;
-  scenario.renewableConsumption = year_summary.renewableConsumption.value;
-  scenario.renewableShare = year_summary.renewableShare.value;
-  scenario.maxGasCapacity = year_summary.maxGasCapacity.value;
-  scenario.maxHydrogenUsageCapacity = year_summary.maxHydrogenUsageCapacity.value;
-  scenario.maxGasPlusHydrogen=year_summary.maxGasPlusHydrogen.value;
-  scenario.maxStorageCapacity = year_summary.maxStorageCapacity.value;
-  scenario.fossilCapacityWithMargin = year_summary.fossilCapacityWithMargin.value;
-  scenario.gasPlusHydrogenWithMargin=year_summary.gasPlusHydrogenWithMargin.value
-  scenario.curtailedEnergy = year_summary.curtailedEnergy.value;
-  scenario.missingEnergy = year_summary.missingEnergy.value;
-  scenario.gasGeneration = year_summary.fossilGeneration.value;
-  scenario.nuclearGeneration=year_summary.nuclearGeneration.value;
-  scenario.wasteToEnergyGeneration=year_summary.wasteToEnergyGeneration.value;
-  scenario.hydrogenGeneration=year_summary.hydrogenGeneration.value;
-  scenario.hydrogenImported=year_summary.hydrogenImported.value;
-  scenario.meanHydrogenStorage=year_summary.meanHydrogenStorage.value;
-  scenario.hydrogenStorage=year_summary.hydrogenStorage.value;
-  scenario.gasConsumption=year_summary.gasConsumption.value;
+  yearState.mustRun = year_summary.mustRun.value;
+  yearState.fossilGeneration = year_summary.fossilGeneration.value
+  yearState.solarGeneration = year_summary.solarGeneration.value;
+  yearState.windGeneration = year_summary.windGeneration.value;
+  yearState.gasInToEnergy = year_summary.gasInToEnergy.value;
+  yearState.solarInToEnergy = year_summary.solarInToEnergy.value;
+  yearState.windInToEnergy = year_summary.windInToEnergy.value;
+  yearState.nuclearInToEnergy = year_summary.nuclearInToEnergy.value;
+  yearState.wasteToEnergyInToEnergy = year_summary.wasteToEnergyInToEnergy.value;
+  yearState.storageUsage = year_summary.storageUtilization.value;
+  yearState.v2gUsage=year_summary.v2gUsage.value;
+  yearState.renewableConsumption = year_summary.renewableConsumption.value;
+  yearState.renewableShare = year_summary.renewableShare.value;
+  yearState.maxGasCapacity = year_summary.maxGasCapacity.value;
+  yearState.maxHydrogenUsageCapacity = year_summary.maxHydrogenUsageCapacity.value;
+  yearState.maxGasPlusHydrogen=year_summary.maxGasPlusHydrogen.value;
+  yearState.maxStorageCapacity = year_summary.maxStorageCapacity.value;
+  yearState.fossilCapacityWithMargin = year_summary.fossilCapacityWithMargin.value;
+  yearState.gasPlusHydrogenWithMargin=year_summary.gasPlusHydrogenWithMargin.value
+  yearState.curtailedEnergy = year_summary.curtailedEnergy.value;
+  yearState.missingEnergy = year_summary.missingEnergy.value;
+  yearState.gasGeneration = year_summary.fossilGeneration.value;
+  yearState.nuclearGeneration=year_summary.nuclearGeneration.value;
+  yearState.wasteToEnergyGeneration=year_summary.wasteToEnergyGeneration.value;
+  yearState.hydrogenGeneration=year_summary.hydrogenGeneration.value;
+  yearState.hydrogenImported=year_summary.hydrogenImported.value;
+  yearState.meanHydrogenStorage=year_summary.meanHydrogenStorage.value;
+  yearState.hydrogenStorage=year_summary.hydrogenStorage.value;
+  yearState.gasConsumption=year_summary.gasConsumption.value;
   
 };
 
@@ -661,10 +661,10 @@ function _updateYearStateWithResults(scenario, year_summary) {
  * Unlike the summary views, this function dumps the full internal state of every simulated year.
  * It allows engineers to inspect the trajectory (2020->2050) and verify the interpolation 
  * and cost accumulation logic manually if needed.
- * * @param {Array<YearState>} scenarios - The complete timeline of scenario objects to be serialized.
+ * * @param {Array<YearState>} yearStates - The complete timeline of yearState objects to be serialized.
  */
-function saveYearStatesOutput(scenarios) {
-  writeToSheet(SHEET_YEAR_STATES_OUTPUT, YEAR_STATE_HEADERS_WITH_COSTS, scenarios);
+function saveYearStatesOutput(yearStates) {
+  writeToSheet(SHEET_YEAR_STATES_OUTPUT, YEAR_STATE_HEADERS_WITH_COSTS, yearStates);
 };
 
 
@@ -672,7 +672,7 @@ function saveYearStatesOutput(scenarios) {
 
 /**
  * Timeline Generator Module.
- * Constructs a full chronological roadmap by bridging the gap between the start year and the target year.
+ * Constructs a full chronological scenario by bridging the gap between the start year and the target year.
  * * Functionality:
  * 1. Instantiation: Converts raw parameters into structured 'YearState' objects.
  * 2. Linear Interpolation: Calculates all intermediate years (e.g., 2024-2049).
@@ -688,17 +688,17 @@ function generateYearStates(baseYearStateParams, targetYearStateParams) {
   var targetYearState = new YearState(targetYearStateParams.toList(), KEYFRAME_HEADERS);
   // 2. Initialize Timeline
   // Start the array with the Base Year (e.g., 2023)
-  var scenarios = [baseYearState];
+  var yearStates = [baseYearState];
   // 3. Fill the Gap (The Bridge)
   // Generates the intermediate years. 
   // CRITICAL DEPENDENCY: The 'interpolate' method must return exclusive years (Start < Year < End).
   var interpolatedYearStates = targetYearState.interpolate(baseYearState);
   // 4. Merge Intermediate Years
   // Note: 'concat' returns a new array, re-assignment is necessary.
-  scenarios = scenarios.concat(interpolatedYearStates);
+  yearStates = yearStates.concat(interpolatedYearStates);
   // 5. Finalize Timeline
   // BUG WATCH: Ensure 'interpolatedYearStates' did not already include the target year.
-  // If 'interpolate' is inclusive, this line creates a duplicate 2050 scenario.
-  scenarios.push(targetYearState);
-  return scenarios;
+  // If 'interpolate' is inclusive, this line creates a duplicate 2050 yearState.
+  yearStates.push(targetYearState);
+  return yearStates;
 };

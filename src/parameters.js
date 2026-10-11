@@ -1,4 +1,4 @@
-const SHEET_PARAMETERS = '01_parameters'
+const SHEET_PARAMETERS = '20_parameters'
 
 var PARAMETER_TO_VARIABLE_NAME = {
   'solar average yearly production hours': 'solarKwToKwhYearly',
@@ -69,28 +69,28 @@ function readParams(){
 
 /**
  * Context Builder: Prepares the specific parameter set for a single simulation iteration.
- * Merges global defaults with scenario-specific overrides (Capacities, Year, etc.).
+ * Merges global defaults with yearState-specific overrides (Capacities, Year, etc.).
  * * @param {Object} in_data - Global input data containing base parameters.
- * @param {Object} scenario - The specific scenario configuration to apply.
+ * @param {Object} yearState - The specific yearState configuration to apply.
  * @return {Object} A fully computed parameter object ready for the engine.
  */
-function parametersFromYearState(in_data, scenario,i) {
+function parametersFromYearState(in_data, yearState,i) {
   var params = Object.assign({}, in_data.parameters) //copy
 
-  // Overwrite base defaults with the specific constraints of the current scenario.
-  params.currentYear = scenario.year;
-  params.solarCapacity = scenario.solarCapacity;
-  params.windCapacity = scenario.windCapacity;
-  params.storageEnergy = scenario.storageEnergy;
-  params.storageEfficiency = scenario.storageEfficiency;
-  params.storageDepthOfDischarge = scenario.storageDepthOfDischarge;
-  params.v2gEnergy=scenario.v2gEnergy;
-  params.dfsReductionPerHour=scenario.dfsReductionPerHour;
-  params.dfsHoursPerYear=scenario.dfsHoursPerYear;
-  params.nuclearCapacity=scenario.nuclearCapacity;
-  params.wasteToEnergyCapacity=scenario.wasteToEnergyCapacity;
-  params.hydrogenProductionCapacity=scenario.hydrogenProductionCapacity;
-  params.hydrogenImportCapacity=scenario.hydrogenImportCapacity
+  // Overwrite base defaults with the specific constraints of the current yearState.
+  params.currentYear = yearState.year;
+  params.solarCapacity = yearState.solarCapacity;
+  params.windCapacity = yearState.windCapacity;
+  params.storageEnergy = yearState.storageEnergy;
+  params.storageEfficiency = yearState.storageEfficiency;
+  params.storageDepthOfDischarge = yearState.storageDepthOfDischarge;
+  params.v2gEnergy=yearState.v2gEnergy;
+  params.dfsReductionPerHour=yearState.dfsReductionPerHour;
+  params.dfsHoursPerYear=yearState.dfsHoursPerYear;
+  params.nuclearCapacity=yearState.nuclearCapacity;
+  params.wasteToEnergyCapacity=yearState.wasteToEnergyCapacity;
+  params.hydrogenProductionCapacity=yearState.hydrogenProductionCapacity;
+  params.hydrogenImportCapacity=yearState.hydrogenImportCapacity
 
   // Constraint: Force Hydrogen storage to 0 in the base year (2025) as infrastructure doesn't exist yet
   if (i==0){

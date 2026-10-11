@@ -1,19 +1,19 @@
 /**
  * Reference test (regression test, reference scenario).
  *
- * Runs one fixed roadmap end to end (simulation + costs) WITHOUT writing to any sheet,
+ * Runs one fixed scenario end to end (simulation + costs) WITHOUT writing to any sheet,
  * and compares the key results to values recorded earlier (REFERENCE_EXPECTED, in
  * reference_test_expected.js). Any unintended change in code or data shows up as a difference.
  *
- *  - recordReferenceTest(): runs the roadmap and shows the JSON to paste into reference_test_expected.js.
- *  - runReferenceTest():    runs the roadmap and prints PASS / FAIL with the differences.
+ *  - recordReferenceTest(): runs the scenario and shows the JSON to paste into reference_test_expected.js.
+ *  - runReferenceTest():    runs the scenario and prints PASS / FAIL with the differences.
  */
 
-const REFERENCE_ROADMAP_NAME = 'Base';
+const REFERENCE_SCENARIO_NAME = 'Base';
 const REFERENCE_TOLERANCE = 1e-6; // relative
 const REFERENCE_YEARS = [2030, 2040, 2050]; // years whose details are compared
 
-// Keyframes of the "Base" roadmap, copied from 30_roadmaps-keyframes (2026-10-10).
+// Keyframes of the "Base" scenario, copied from 21_scenarios-keyframes (2026-10-10).
 // Column order = KEYFRAME_HEADERS. Kept in code so edits in the sheet do not change the reference.
 const REFERENCE_KEYFRAMES = [
   ['Base', 2026, 8000, 500, 6000, 0.9083333333333333, 0.81, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
@@ -24,7 +24,7 @@ const REFERENCE_KEYFRAMES = [
   ['Base', 2050, 50000, 500, 80000, 0.95, 0.9, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3]
 ];
 
-// Parameters that are overridden per year by the roadmap; excluded from the input snapshot.
+// Parameters that are overridden per year by the scenario; excluded from the input snapshot.
 const REFERENCE_OVERRIDDEN_PARAMETERS = [
   'currentYear', 'solarCapacity', 'windCapacity', 'storageEnergy', 'storageCapacity',
   'storageEfficiency', 'storageEfficiencySqrt', 'storageDepthOfDischarge',
@@ -34,8 +34,8 @@ const REFERENCE_OVERRIDDEN_PARAMETERS = [
   'futureDemandFactor', 'mustRun'
 ];
 
-/** Builds the reference roadmap from the embedded keyframes (same logic as readRoadmapsFromKeyframes). */
-function _buildReferenceRoadmap() {
+/** Builds the reference scenario from the embedded keyframes (same logic as readScenariosFromKeyframes). */
+function _buildReferenceScenario() {
   var years = [];
   var last = null;
   REFERENCE_KEYFRAMES.forEach(function(row) {
@@ -44,34 +44,34 @@ function _buildReferenceRoadmap() {
     years.push(current);
     last = current;
   });
-  return new Roadmap(years);
+  return new Scenario(years);
 }
 
-/** Runs the reference roadmap and returns {inputs, results}. Writes nothing to the sheet. */
+/** Runs the reference scenario and returns {inputs, results}. Writes nothing to the sheet. */
 function _computeReference() {
   var in_data = getInputData();
   var costsDb = getCostsDb();
-  var roadmap = _buildReferenceRoadmap();
+  var scenario = _buildReferenceScenario();
   // Snapshot the inputs before simulate(), which updates parameters.hydrogenStorage.
   var inputs = {};
   Object.keys(in_data.parameters).sort().forEach(function(k) {
     if (REFERENCE_OVERRIDDEN_PARAMETERS.indexOf(k) === -1) inputs[k] = in_data.parameters[k];
   });
-  roadmap.simulate(in_data);
-  roadmap.calculateCosts(costsDb, in_data.parameters);
+  scenario.simulate(in_data);
+  scenario.calculateCosts(costsDb, in_data.parameters);
 
   var results = {
-    totalCost: roadmap.totalCost,
-    solarCost: roadmap.solarCost,
-    windCost: roadmap.windCost,
-    storageCost: roadmap.storageCost,
-    gasCost: roadmap.gasCost,
-    externalities: roadmap.externalities,
-    maxRenewableShare: roadmap.maxRenewableShare,
-    maxFossilCapacity: roadmap.maxFossilCapacity
+    totalCost: scenario.totalCost,
+    solarCost: scenario.solarCost,
+    windCost: scenario.windCost,
+    storageCost: scenario.storageCost,
+    gasCost: scenario.gasCost,
+    externalities: scenario.externalities,
+    maxRenewableShare: scenario.maxRenewableShare,
+    maxFossilCapacity: scenario.maxFossilCapacity
   };
   REFERENCE_YEARS.forEach(function(y) {
-    var s = roadmap.yearStateByYear[y];
+    var s = scenario.yearStateByYear[y];
     results['renewableShare_' + y] = s.renewableShare;
     results['gasGeneration_' + y] = s.gasGeneration;
     results['maxGasCapacity_' + y] = s.maxGasCapacity;
@@ -114,7 +114,7 @@ function _showReferenceMessage(title, text) {
 /** Records the current results. Paste the output into reference_test_expected.js. */
 function recordReferenceTest() {
   var out = _computeReference();
-  var json = JSON.stringify({roadmap: REFERENCE_ROADMAP_NAME, recorded: new Date().toISOString(),
+  var json = JSON.stringify({scenario: REFERENCE_SCENARIO_NAME, recorded: new Date().toISOString(),
     inputs: out.inputs, results: out.results}, null, 2);
   Logger.log(json);
   var html = HtmlService.createHtmlOutput(
@@ -125,7 +125,7 @@ function recordReferenceTest() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Reference test results');
 }
 
-/** Runs the reference roadmap and compares to the recorded values. Returns 'PASS' | 'FAIL' | 'INPUT CHANGED'. */
+/** Runs the reference scenario and compares to the recorded values. Returns 'PASS' | 'FAIL' | 'INPUT CHANGED'. */
 function runReferenceTest() {
   if (typeof REFERENCE_EXPECTED === 'undefined' || REFERENCE_EXPECTED === null) {
     _showReferenceMessage('Reference test: no expected values', 'Run recordReferenceTest() first and paste the result into reference_test_expected.js.');
@@ -143,7 +143,7 @@ function runReferenceTest() {
     if (inputDiffs.length) text += '\n\nNote: parameter inputs differ from the recorded ones:\n' + inputDiffs.join('\n');
   } else if (inputDiffs.length) {
     status = 'INPUT CHANGED';
-    text = 'Parameters in 01_parameters differ from the recorded ones, so the comparison is not valid:\n' +
+    text = 'Parameters in 20_parameters differ from the recorded ones, so the comparison is not valid:\n' +
       inputDiffs.join('\n') + '\n\nResult differences:\n' + resultDiffs.join('\n');
   } else {
     status = 'FAIL';

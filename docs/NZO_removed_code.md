@@ -1178,3 +1178,124 @@ const SHEET_SAVED_ROADMAPS = '32_saved-roadmaps';
 const HOURLY_EXPORTED_COLUMNS = [2, 3, 4, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18];
 
 ```
+
+
+## 2026-10-11 — _README tab writer (replaced by the run guide in 00_documentation)
+
+### src/design-scheme.js: _writeReadme
+```js
+/** The _README tab: how to run, first-run checklist, color legend. Rewritten on every apply (do not edit it by hand). */
+function _writeReadme(ss) {
+  var sheet = getOrCreateSheet('_README');
+  sheet.clear();
+  var rows = [
+    ['NZO Model – קרא אותי', ''],
+    ['', ''],
+    ['ארבעה שלבים להרצה', ''],
+    ['1. קלט', 'ערוך רק לשוניות כחולות: 01_parameters ו-30_roadmaps-keyframes'],
+    ['2. הרצה', 'תפריט NZO Model: Predict Year לשנה אחת, או Calculate Scenarios and Costs לכל ה-roadmaps'],
+    ['3. תוצאות', 'לשוניות ירוקות (10, 11, 12, 15, 31) נכתבות מחדש בכל הרצה. ההיסטוריה נשמרת ב-90_run-history (כתום)'],
+    ['4. בדיקה', 'Advanced → Check data status: גרסת קוד וגרסת נתונים צריכות להיות תואמות למאסטר'],
+    ['', ''],
+    ['בדיקה להרצה ראשונה', ''],
+    ['א.', 'בחר תרחיש ב-01_parameters!C2 ושנה ב-C8'],
+    ['ב.', 'הרץ Calculate Costs ואז Predict Year'],
+    ['ג.', 'ודא ש-Advanced → Run reference test מחזיר PASS'],
+    ['', ''],
+    ['מקרא צבעי הלשוניות', 'ראה גם 00_documentation, תא A1']
+  ];
+  Object.keys(DESIGN_ROLES).forEach(function(k) { rows.push([DESIGN_ROLES[k].label, DESIGN_ROLES[k].note]); });
+  sheet.getRange(1, 1, rows.length, 2).setValues(rows);
+  sheet.getRange('A1').setFontWeight('bold').setFontSize(14);
+  [3, 9, 14].forEach(function(r) { sheet.getRange(r, 1).setFontWeight('bold'); });
+  var firstRoleRow = 15;
+  Object.keys(DESIGN_ROLES).forEach(function(k, i) {
+    sheet.getRange(firstRoleRow + i, 1).setBackground(DESIGN_ROLES[k].color).setFontColor('#ffffff').setFontWeight('bold');
+  });
+  sheet.setColumnWidth(1, 180);
+  sheet.setColumnWidth(2, 640);
+}
+
+
+```
+
+## 2026-10-11 — one-off cell color tools (design-scheme.js, main.js)
+Removed after the cell colors were reset; menu items "Audit cell colors" and "Reset cell colors" removed from Advanced.
+
+```js
+const DESIGN_AUDIT_SHEET = '_color-audit';
+
+/**
+ * Read-only audit of cell colors: for every tab, groups the used range by (background, font color) and writes
+ * one row per group to a temporary tab '_color-audit' (overwritten on each run; delete it when done).
+ * Columns: tab, tab role, background, font color, cells, first cell, last cell (or the full list of cells when a group has up to 40), bold cells, cells with a value.
+ */
+function auditCellColors() {
+  var ss = SpreadsheetApp.getActive();
+  var out = [['tab', 'role', 'background', 'font color', 'cells', 'first cell', 'last cell / cell list', 'with value', 'bold']];
+  ss.getSheets().forEach(function(sheet) {
+    var name = sheet.getName();
+    if (name === DESIGN_AUDIT_SHEET) return;
+    var rows = sheet.getLastRow(), cols = sheet.getLastColumn();
+    if (rows < 1 || cols < 1) return;
+    var range = sheet.getRange(1, 1, rows, cols);
+    var bgs = range.getBackgrounds(), fonts = range.getFontColors(), vals = range.getValues(), weights = range.getFontWeights();
+    var groups = {}, order = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var key = bgs[r][c] + '|' + fonts[r][c];
+        var g = groups[key];
+        if (!g) { g = groups[key] = {bg: bgs[r][c], font: fonts[r][c], n: 0, first: null, last: null, val: 0, bold: 0, list: []}; order.push(key); }
+        var a1 = _colLetter(c + 1) + (r + 1);
+        g.n++;
+        if (!g.first) g.first = a1;
+        g.last = a1;
+        if (g.list.length < 40) g.list.push(a1);
+        if (vals[r][c] !== '') g.val++;
+        if (weights[r][c] === 'bold') g.bold++;
+      }
+    }
+    order.forEach(function(key) {
+      var g = groups[key];
+      out.push([name, DESIGN_SCHEME[name] || '', g.bg, g.font, g.n, g.first, g.n <= 40 ? g.list.join(' ') : g.last, g.val, g.bold]);
+    });
+  });
+  var report = ss.getSheetByName(DESIGN_AUDIT_SHEET) || ss.insertSheet(DESIGN_AUDIT_SHEET);
+  report.clear();
+  report.getRange(1, 1, out.length, out[0].length).setValues(out);
+  report.getRange(1, 1, 1, out[0].length).setFontWeight('bold');
+  console.log('auditCellColors: ' + (out.length - 1) + ' color groups written to ' + DESIGN_AUDIT_SHEET);
+  return out;
+}
+
+function _colLetter(n) {
+  var s = '';
+  while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+// Tabs whose cell colors are managed elsewhere: the documentation tab (legend and tab list are written by
+// applyDesignScheme), _status (status cell is colored by checkDataStatus) and the audit report.
+const DESIGN_RESET_SKIP = ['00_documentation', '_status', DESIGN_AUDIT_SHEET];
+
+/**
+ * Clears all manual cell colors (background -> none, font color -> default) in every tab except DESIGN_RESET_SKIP.
+ * Values, bold, borders, conditional formats and protections are untouched. Afterwards run Apply design scheme,
+ * which re-applies the calculated-cell look in 20_parameters.
+ */
+function resetCellColors() {
+  var ui = SpreadsheetApp.getUi();
+  var ss = SpreadsheetApp.getActive();
+  var sheets = ss.getSheets().filter(function(s) { return DESIGN_RESET_SKIP.indexOf(s.getName()) < 0; });
+  var answer = ui.alert('Reset cell colors',
+    'All manual cell background and font colors will be cleared in ' + sheets.length + ' tabs (not 00_documentation, _status). Continue?',
+    ui.ButtonSet.OK_CANCEL);
+  if (answer !== ui.Button.OK) return;
+  sheets.forEach(function(sheet) {
+    var range = sheet.getDataRange();
+    range.setBackground(null).setFontColor(null);
+  });
+  SpreadsheetApp.flush();
+  console.log('resetCellColors: cleared ' + sheets.length + ' tabs');
+}
+```

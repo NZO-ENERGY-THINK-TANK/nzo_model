@@ -1,32 +1,32 @@
 /**
- * The Roadmap Class: The Strategic Manager.
+ * The Scenario Class: The Strategic Manager.
  * Represents a long-term energy transition plan (e.g., 2025-2050).
- * It acts as a container for a series of yearly 'Scenarios'.
+ * It acts as a container for a series of yearly 'Year states'.
  * * Responsibilities:
  * 1. Orchestration: Runs the simulation for each year sequentially.
  * 2. Financial Aggregation: Calculates Net Present Value (NPV) for the entire project life-cycle.
  * 3. Target Tracking: Keeps track of the final goals (Capacity in 2050).
  */
-class Roadmap{
+class Scenario{
 
-    constructor(scenarios) {
-    // Basic validation: Ensure all scenarios belong to the same project name
-    this.name = scenarios[0].name
-    // We store the parameters of the LAST scenario (target year) 
-    // to easily see where this roadmap leads (e.g., "How much solar do we end up with?").
-    this.solarCapacity = scenarios[scenarios.length - 1].solarCapacity
-    this.windCapacity = scenarios[scenarios.length - 1].windCapacity
-    this.storageEnergy = scenarios[scenarios.length - 1].storageEnergy
-    this.nuclearCapacity=scenarios[scenarios.length -1].nuclearCapacity
-    this.wasteToEnergyCapacity=scenarios[scenarios.length-1].wasteToEnergyCapacity
-    this.v2gEnergy=scenarios[scenarios.length -1].v2gEnergy
-    this.hydrogenProductionCapacity=scenarios[scenarios.length-1].hydrogenProductionCapacity
-    this.hydrogenImportCapacity=scenarios[scenarios.length-1].hydrogenImportCapacity
-    this.dfsHoursPerYear=scenarios[scenarios.length -1].dfsHoursPerYear
-    this.dfsReductionPerHour=scenarios[scenarios.length -1].dfsReductionPerHour
+    constructor(yearStates) {
+    // Basic validation: Ensure all yearStates belong to the same project name
+    this.name = yearStates[0].name
+    // We store the parameters of the LAST yearState (target year) 
+    // to easily see where this scenario leads (e.g., "How much solar do we end up with?").
+    this.solarCapacity = yearStates[yearStates.length - 1].solarCapacity
+    this.windCapacity = yearStates[yearStates.length - 1].windCapacity
+    this.storageEnergy = yearStates[yearStates.length - 1].storageEnergy
+    this.nuclearCapacity=yearStates[yearStates.length -1].nuclearCapacity
+    this.wasteToEnergyCapacity=yearStates[yearStates.length-1].wasteToEnergyCapacity
+    this.v2gEnergy=yearStates[yearStates.length -1].v2gEnergy
+    this.hydrogenProductionCapacity=yearStates[yearStates.length-1].hydrogenProductionCapacity
+    this.hydrogenImportCapacity=yearStates[yearStates.length-1].hydrogenImportCapacity
+    this.dfsHoursPerYear=yearStates[yearStates.length -1].dfsHoursPerYear
+    this.dfsReductionPerHour=yearStates[yearStates.length -1].dfsReductionPerHour
     // Initialize containers
     this.yearStateByYear = {}
-    this.years = scenarios
+    this.years = yearStates
     // Initialize Financial KPIs (to be calculated later)
     this.solarCost = null
     this.windCost = null
@@ -44,39 +44,39 @@ class Roadmap{
     this.maxRenewableShare = 0
 
     // Map array to object for O(1) access by year
-    for (var i = 0; i < scenarios.length; i++) {
-      if (scenarios[i].name !== this.name) {
-        throw "scenario.name (" + scenarios[i].name + ") is different from Roadmap name (" + this.name + ")";
+    for (var i = 0; i < yearStates.length; i++) {
+      if (yearStates[i].name !== this.name) {
+        throw "yearState.name (" + yearStates[i].name + ") is different from Scenario name (" + this.name + ")";
       }
-      this.yearStateByYear[scenarios[i].year] = scenarios[i];
+      this.yearStateByYear[yearStates[i].year] = yearStates[i];
     }
   }
   
   /**
    * PHYSICS ENGINE TRIGGER
-   * Iterates through every year in the roadmap and runs the energy simulation.
+   * Iterates through every year in the scenario and runs the energy simulation.
    * @param {Object} in_data - The global input data (weather patterns, demand curves).
    */
   simulate(in_data) {
     let scen_data = Object.assign({}, in_data)//copy
     for (var i = 0; i < this.years.length; ++i) {
-      var scenario = this.years[i];
+      var yearState = this.years[i];
       // OPTIMIZATION:
       // If this year was already simulated (has a timestamp), skip it.
       // Saves time when re-running the tool.
-      if (scenario.lastCalculationTime !== '' && scenario.lastCalculationTime !== undefined) {
+      if (yearState.lastCalculationTime !== '' && yearState.lastCalculationTime !== undefined) {
         continue;
       }
       // 1. Prepare Parameters: Merge global data with specific year settings
-      scen_data.parameters = parametersFromYearState(scen_data, scenario,i);
+      scen_data.parameters = parametersFromYearState(scen_data, yearState,i);
 
       // 2. RUN SIMULATION: This calls the heavy-lifting functions (_applyDfs, _calculateStorage, etc.)
       // returns the 'yearlySummary' object we analyzed in previous steps.
       let {yearlySummary} = calculateYear(scen_data)
       
-      // 3. Save Results: Inject the calculated stats back into the scenario object
-      _updateYearStateWithResults(scenario, yearlySummary);
-      scenario.lastCalculationTime = new Date();
+      // 3. Save Results: Inject the calculated stats back into the yearState object
+      _updateYearStateWithResults(yearState, yearlySummary);
+      yearState.lastCalculationTime = new Date();
     }
   }
   
@@ -107,7 +107,7 @@ class Roadmap{
     }  
     var previous = null;// Used to calculate incremental CAPEX (new builds only)
 
-    // 1. Calculate Annual Costs for each scenario
+    // 1. Calculate Annual Costs for each yearState
     this.years.forEach(current => {
       // Delegate the specific year calculation to the YearState class
       current.calculateCosts(costsDb, previous, parameters);
@@ -143,7 +143,7 @@ class Roadmap{
     this.hydrogenCost=NPV(parameters.interestRate,byYear.hydrogenCost);
     this.externalities = NPV(parameters.interestRate, byYear.externalities);
     this.totalCost = NPV(parameters.interestRate, byYear.totalCost);
-    // Find peaks across the entire roadmap timeline
+    // Find peaks across the entire scenario timeline
     this.maxFossilCapacity = byYear.fossilCapacity[byYear.fossilCapacity.length - 1];
     this.maxRenewableShare = Math.max(...byYear.renewableShare);
     
@@ -152,32 +152,32 @@ class Roadmap{
 };
 
 /**
- * Roadmap Factory Module.
+ * Scenario Factory Module.
  * Responsible for data pre-processing and structural organization.
- * Transforms a flat, unstructured list of Scenarios into logical 'Roadmap' objects.
- * * @param {Array} scenarios - The raw input array containing all scenario objects mixed together.
- * @returns {Array<Roadmap>} - An array of initialized Roadmap instances, grouped by name.
+ * Transforms a flat, unstructured list of Year states into logical 'Scenario' objects.
+ * * @param {Array} yearStates - The raw input array containing all yearState objects mixed together.
+ * @returns {Array<Scenario>} - An array of initialized Scenario instances, grouped by name.
  */
-function groupYearsIntoRoadmaps(scenarios) {
+function groupYearsIntoScenarios(yearStates) {
   // 1. Initialization: Create a Hash Map for efficient grouping.
-  // Key = Roadmap Name, Value = Array of Scenarios belonging to that roadmap.
-  var yearsByRoadmap = {};
+  // Key = Scenario Name, Value = Array of Year states belonging to that scenario.
+  var yearsByScenario = {};
   // 2. Aggregation Loop: Iterate through the raw data.
-  for (var i = 0; i < scenarios.length; ++i) {
-    // Check if the bucket for this specific roadmap name exists.
+  for (var i = 0; i < yearStates.length; ++i) {
+    // Check if the bucket for this specific scenario name exists.
     // If not, initialize it with an empty array.
-    if (!(yearsByRoadmap.hasOwnProperty(scenarios[i].name))) {
-      yearsByRoadmap[scenarios[i].name] = [];
+    if (!(yearsByScenario.hasOwnProperty(yearStates[i].name))) {
+      yearsByScenario[yearStates[i].name] = [];
     }
-    // Push the current scenario into the correct bucket.
-    yearsByRoadmap[scenarios[i].name].push(scenarios[i]);
+    // Push the current yearState into the correct bucket.
+    yearsByScenario[yearStates[i].name].push(yearStates[i]);
   }
-  var roadmaps = []
-  // 3. Instantiation Loop: Convert raw groups into Roadmap Class Instances.
-  for (var name in yearsByRoadmap) {
-    roadmaps.push(new Roadmap(yearsByRoadmap[name]));
+  var scenarios = []
+  // 3. Instantiation Loop: Convert raw groups into Scenario Class Instances.
+  for (var name in yearsByScenario) {
+    scenarios.push(new Scenario(yearsByScenario[name]));
   }
-  return roadmaps;
+  return scenarios;
 };
 
 

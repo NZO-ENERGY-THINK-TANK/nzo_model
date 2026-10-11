@@ -1,6 +1,6 @@
-const SHEET_REF_YEAR_HOURLY = '04_raw-data-hourly'
-// Demand scenario names (01_parameters 'demand-scenario') -> column header in 02_demand (data/yearly_demand.csv)
-const DEMAND_SCENARIO_COLUMNS = {
+const SHEET_REF_YEAR_HOURLY = '12_raw-data-hourly'
+// Demand forecast names (20_parameters 'demand-forecast') -> column header in 10_demand-yearly (data/yearly_demand.csv)
+const DEMAND_FORECAST_COLUMNS = {
   'Noga conservative': 'noga23_conservative_twh',
   'Noga BAU': 'noga23_bau_twh'
 };
@@ -105,17 +105,17 @@ function _readYearlyTable(sheetName, requiredColumns) {
 }
 
 /**
- * Reads the long-term electricity demand forecast (2023-2050) from 02_demand (data/yearly_demand.csv)
- * and the must-run capacity from 03_must_run_yearly (data/must_run_yearly.csv).
- * The demand scenario is chosen by 01_parameters 'demand-scenario' and mapped by DEMAND_SCENARIO_COLUMNS.
+ * Reads the long-term electricity demand forecast (2023-2050) from 10_demand-yearly (data/yearly_demand.csv)
+ * and the must-run capacity from 11_must-run-yearly (data/must_run_yearly.csv).
+ * The demand forecast is chosen by 20_parameters 'demand-forecast' and mapped by DEMAND_FORECAST_COLUMNS.
  * * @return {Object} A map structure: { Year: { demand (MWh), mustRun (MW) } }
  */
 function futureDemandForecast() {
-  var scenarioRow = readParams().filter(function(row) { return row[0] === 'demand-scenario'; })[0];
+  var scenarioRow = readParams().filter(function(row) { return row[0] === 'demand-forecast'; })[0];
   var scenario = scenarioRow ? scenarioRow[2] : undefined;
-  var demandColumn = DEMAND_SCENARIO_COLUMNS[scenario];
+  var demandColumn = DEMAND_FORECAST_COLUMNS[scenario];
   if (!demandColumn) {
-    throw new Error("Unknown demand-scenario '" + scenario + "'. Expected one of: " + Object.keys(DEMAND_SCENARIO_COLUMNS).join(', '));
+    throw new Error("Unknown demand-forecast '" + scenario + "'. Expected one of: " + Object.keys(DEMAND_FORECAST_COLUMNS).join(', '));
   }
   var demand = _readYearlyTable(SHEET_DEMAND_INPUT, [demandColumn]);
   var mustRun = _readYearlyTable(SHEET_MUST_RUN_INPUT, ['must_run_mw']);

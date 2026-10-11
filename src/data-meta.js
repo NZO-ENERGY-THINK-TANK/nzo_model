@@ -11,15 +11,15 @@
  */
 const SHEET_META = '_meta';
 const SHEET_STATUS = '_status';
-const SHEET_DEMAND_INPUT = '02_demand';
-const SHEET_MUST_RUN_INPUT = '03_must_run_yearly';
+const SHEET_DEMAND_INPUT = '10_demand-yearly';
+const SHEET_MUST_RUN_INPUT = '11_must-run-yearly';
 
 
 const DATA_HASH_RANGES = [
-  {sheet: '05_costs', row: 1, col: 1, rows: 56, cols: 14, pick: null},
+  {sheet: '13_costs', row: 1, col: 1, rows: 56, cols: 14, pick: null},
   {sheet: SHEET_DEMAND_INPUT, row: 2, col: 1, rows: 28, cols: 3, pick: null},
   {sheet: SHEET_MUST_RUN_INPUT, row: 2, col: 1, rows: 28, cols: 2, pick: null},
-  {sheet: '04_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 14, pick: null}
+  {sheet: '12_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 14, pick: null}
 ];
 
 function _normalizeForHash(v) {
@@ -136,7 +136,7 @@ function checkDataStatus() {
 
 /**
  * Identity of a run: who, which code, which data, and whether the data still matches _meta.
- * Written to every row of 90_run-history (and to saved roadmaps).
+ * Written to every row of 90_run-history .
  * @return {{run_id, researcher, code_version, data_version, data_hash_match}}
  */
 function getRunMetadata() {
