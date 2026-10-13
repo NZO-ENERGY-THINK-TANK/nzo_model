@@ -102,7 +102,8 @@ function applyDesignScheme() {
   _migrateLegendLayout(ss);
   _writeMenuDocs(ss);
   _writeRunGuide(ss);
-  _writeSheetsTable(ss);
+  var tableEnd = _writeSheetsTable(ss);
+  _writeDependencyDiagram(ss, tableEnd);
   _applyTabOrder(ss);
   SpreadsheetApp.flush();
 }
@@ -146,6 +147,7 @@ const DESIGN_MENU_DOCS = [
   ['Predict Year', 'מריצה את המודל השנתי לשנה שב-20_parameters!C8: תמהיל ייצור, אחוז מתחדשות, פליטות', '42_hourly-predicted, 41_daily-predicted, 40_year-summary, 90_run-history'],
   ['Calculate Costs', 'מחשבת את תחזית העלויות השנתית מ-13_costs. להריץ אחרי כל שינוי ב-13_costs', '30_costs-forecast'],
   ['Calculate Scenarios and Costs', 'מריצה את כל ה-scenarios שב-21_scenarios-keyframes ומחשבת עלויות. מבקשת אישור לפני דריסה', '50_scenarios-yearly, 30_costs-forecast'],
+  ['Sync from master', 'מעתיקה את נתוני הבסיס (10–13) מהמאסטר לעותק שלך, בודקת תקינות (hash וכותרות), ומריצה Calculate Costs. לא נוגעת בקלט שלך ובתוצאות. מבקשת אישור לפני דריסה', '10_demand-yearly, 11_must-run-yearly, 12_raw-data-hourly, 13_costs, 30_costs-forecast, _meta, _status'],
   ['Advanced → Run reference test', 'מריצה את scenario הייחוס ומשווה לערכים השמורים בקוד. PASS פירושו שהתוצאות לא השתנו', 'לא כותבת ללשוניות'],
   ['Advanced → Record reference test', 'מקליטה ערכי ייחוס חדשים. רק לשינוי מכוון בתוצאות, ואז מדביקים ל-reference_test_expected.js', 'לא כותבת ללשוניות'],
   ['Advanced → Update data hash', 'רושמת גרסת נתונים וחתימה (hash) של לשוניות 10–13', '_meta, _status'],
@@ -161,8 +163,8 @@ function _writeMenuDocs(ss) {
   sheet.getRange(a.row, a.col, 1, 3).setFontWeight('bold');
 }
 
-// Run guide written to 00_documentation below the menu documentation (A11 and down).
-const DESIGN_RUN_GUIDE_ANCHOR = {row: 11, col: 1};
+// Run guide written to 00_documentation below the menu documentation (A12 and down).
+const DESIGN_RUN_GUIDE_ANCHOR = {row: 12, col: 1};
 const DESIGN_RUN_GUIDE = [
   ['ארבעה שלבים להרצה', ''],
   ['1. קלט', 'ערוך רק לשוניות כחולות: 20_parameters ו-21_scenarios-keyframes'],
@@ -216,13 +218,13 @@ const DESIGN_SHEETS_TABLE = [
 
 function _writeSheetsTable(ss) {
   var doc = ss.getSheetByName(DESIGN_LEGEND_SHEET);
-  if (!doc) return;
+  if (!doc) return 0;
   var colA = doc.getRange(1, 1, Math.min(doc.getMaxRows(), 200), 1).getValues();
   var header = -1;
   for (var i = 0; i < colA.length; i++) {
     if (String(colA[i][0]).trim() === DESIGN_SHEETS_HEADER) { header = i + 1; break; }
   }
-  if (header < 0) { console.log("_writeSheetsTable: header '" + DESIGN_SHEETS_HEADER + "' not found in column A, skipped"); return; }
+  if (header < 0) { console.log("_writeSheetsTable: header '" + DESIGN_SHEETS_HEADER + "' not found in column A, skipped"); return 0; }
   var start = header + 3;
   doc.getRange(start, 1, DESIGN_SHEETS_OLD_ROWS, 2).clear();
   var row = start;
@@ -241,4 +243,24 @@ function _writeSheetsTable(ss) {
       row++;
     });
   });
+  return row;
+}
+
+const DESIGN_DIAGRAM_ALT = 'NZO tab dependency diagram';
+const DESIGN_DIAGRAM_WIDTH = 1000; // px; original image is 1120 x 580
+
+/** Writes a title and the dependency diagram image two rows below the tab list. Replaces an earlier copy. */
+function _writeDependencyDiagram(ss, tableEnd) {
+  var doc = ss.getSheetByName(DESIGN_LEGEND_SHEET);
+  if (!doc || !tableEnd) return;
+  doc.getImages().forEach(function(img) {
+    if (img.getAltTextTitle() === DESIGN_DIAGRAM_ALT) img.remove();
+  });
+  var titleRow = tableEnd + 2;
+  doc.getRange(titleRow, 1, 40, 1).clear(); // area for the title and the image
+  doc.getRange(titleRow, 1).setValue('דיאגרמת תלויות בין הלשוניות').setFontWeight('bold');
+  var blob = Utilities.newBlob(Utilities.base64Decode(DEPENDENCY_DIAGRAM_PNG_BASE64), 'image/png', 'dependency-diagram.png');
+  var image = doc.insertImage(blob, 1, titleRow + 1);
+  image.setAltTextTitle(DESIGN_DIAGRAM_ALT);
+  image.setWidth(DESIGN_DIAGRAM_WIDTH).setHeight(Math.round(DESIGN_DIAGRAM_WIDTH * 580 / 1120));
 }

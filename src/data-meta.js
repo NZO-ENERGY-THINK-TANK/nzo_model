@@ -36,11 +36,16 @@ function _hexOf(bytes) {
   return bytes.map(function(b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
 }
 
-/** Computes the SHA-256 hash of the exported data ranges from the live sheets. */
-function computeDataHash() {
+/**
+ * Computes the SHA-256 hash of the exported data ranges from the live sheets.
+ * @param {Spreadsheet=} spreadsheet defaults to the active spreadsheet (pass the master to hash it, used by Sync).
+ */
+function computeDataHash(spreadsheet) {
   var parts = [];
+  var source = spreadsheet || SpreadsheetApp.getActive();
   DATA_HASH_RANGES.forEach(function(r) {
-    var sheet = getSheet(r.sheet);
+    var sheet = source.getSheetByName(r.sheet);
+    if (!sheet) throw new Error('Sheet "' + r.sheet + '" not found in ' + source.getName());
     var values = sheet.getRange(r.row, r.col, r.rows, r.cols).getValues();
     var a1 = sheet.getRange(r.row, r.col, r.rows, r.cols).getA1Notation();
     parts.push('#' + r.sheet + '!' + a1);
@@ -53,10 +58,13 @@ function computeDataHash() {
   return _hexOf(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8));
 }
 
-/** Reads _meta. Returns {dataVersion, dataHash, hashUpdated} (empty strings when missing). */
-function getDataMeta() {
+/**
+ * Reads _meta. Returns {dataVersion, dataHash, hashUpdated} (empty strings when missing).
+ * @param {Spreadsheet=} spreadsheet defaults to the active spreadsheet (pass the master to read its _meta).
+ */
+function getDataMeta(spreadsheet) {
   var meta = {dataVersion: '', dataHash: '', hashUpdated: ''};
-  var sheet = SpreadsheetApp.getActive().getSheetByName(SHEET_META);
+  var sheet = (spreadsheet || SpreadsheetApp.getActive()).getSheetByName(SHEET_META);
   if (!sheet || sheet.getLastRow() < 1) return meta;
   sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues().forEach(function(row) {
     if (row[0] === 'data_version') meta.dataVersion = String(row[1]);
@@ -93,7 +101,8 @@ function _writeStatus(liveHash) {
     ['code_version', CODE_VERSION],
     ['data_version', meta.dataVersion],
     ['data_hash_match', meta.dataHash === '' ? 'NO HASH RECORDED' : match],
-    ['checked_at', new Date()]
+    ['checked_at', new Date()],
+    ['last_sync', PropertiesService.getDocumentProperties().getProperty(SYNC_PROPERTY_LAST) || '']
   ];
   sheet.clearContents();
   sheet.getRange(1, 1, rows.length, 2).setValues(rows);

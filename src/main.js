@@ -1,6 +1,3 @@
-/**
- * @OnlyCurrentDoc Limits the script to only accessing the current sheet.
- */
 function onOpen() {
   buildMenu();
 }
@@ -22,6 +19,8 @@ function buildMenu() {
   menu.addItem(`Predict Year: ${getParameters().currentYear}` , 'predictYear');
   menu.addItem('Calculate Costs', 'calculateCosts');
   menu.addItem('Calculate Scenarios and Costs', 'calculateScenariosAndCosts');
+  menu.addSeparator();
+  menu.addItem('Sync from master', 'syncFromMaster');
   menu.addSubMenu(SpreadsheetApp.getUi().createMenu('Advanced')
     .addItem('Run reference test', 'runReferenceTest')
     .addItem('Record reference test', 'recordReferenceTest')

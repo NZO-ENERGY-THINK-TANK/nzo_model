@@ -40,9 +40,12 @@
 | Predict Year | סימולציה לשנה אחת לפי `20_parameters` | `42_hourly-predicted`, `41_daily-predicted`, `40_year-summary`, `90_run-history` |
 | Calculate Costs | מחשבת ומייצאת את טבלת העלויות | `30_costs-forecast` |
 | Calculate Scenarios and Costs (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`21_scenarios-keyframes`, שנה אחר שנה | `50_scenarios-yearly`, `30_costs-forecast` |
-| Enumerate Scenarios | סריקת צירופים במנות של כ-5.5 דקות | `21_scenarios-output` |
-| Summarize Scenarios | הצירוף הזול ביותר בכל מדרגה של 5% מתחדשות | `22_scenarios-summary` |
-| save Scenario | שמירת תוצאות של מודל נבחר | `32_saved-scenarios` |
+| Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות, ומריצה Calculate Costs | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_costs`, `30_costs-forecast`, `_meta`, `_status` |
+| Advanced: Run / Record reference test | בדיקת תרחיש ייחוס מול ערכים שמורים ב-`reference_test_expected.js` | לא כותבות ללשוניות |
+| Advanced: Update data hash / Check data status | רישום גרסת נתונים ו-hash ב-`_meta`, ובדיקה שהנתונים תואמים | `_meta`, `_status` |
+| Advanced: Apply design scheme | צבעי לשוניות, הגנות באזהרה, סדר לשוניות, תיעוד התפריט, טבלת הגליונות והדיאגרמה | `00_documentation` |
+
+> **ה-hash תלוי בשמות הלשוניות:** הוא כולל את שם הלשונית והטווח (`#שם!טווח`). אחרי שינוי שם של לשונית בסיס (10–13) צריך להריץ במאסטר Update data hash ולתייג גרסת נתונים חדשה (למשל `data-1.8`), אחרת Sync בעותקים ייעצר עם "המאסטר אינו תואם ל-hash הרשום".
 
 > **חשוב:** Predict Year **לא** מרענן את `30_costs-forecast`. ערכים ב-`20_parameters` שמגיעים משם (למשל נצילות ועומק פריקה של אגירה) מתעדכנים רק אחרי Calculate Costs או Calculate Scenarios and Costs (בונה את כל ה-Scenarios).
 
@@ -58,7 +61,7 @@
 ### קבצי הקוד (מאוקטובר 2026)
 - `year-state.gs`: `YearState` (שנה אחת + עלויות), `YearStateParams`, `generateYearStates`, כותרות פלט וקלט (keyframes), `readScenariosFromKeyframes`, `chooseScenario`, `saveYearStatesOutput`.
 - `scenarios.gs`: `Scenario` (סימולציה ועלויות לכל השנים) ו-`groupYearsIntoScenarios`.
-- `scenarios-enumeration.gs`: סריקת צירופים אוטומטית (`20_`/`21_`/`22_`).
+- `sync.js`: `syncFromMaster` (שלב 10א). `data-meta.js`: גרסת נתונים ו-hash (`computeDataHash`, `getDataMeta` מקבלות גיליון אופציונלי). `design-scheme.js`: סכמת עיצוב, סדר לשוניות, תיעוד ב-`00_documentation`. `config.js`: `MASTER_SPREADSHEET_ID`.
 
 ### מינוח (מאוקטובר 2026)
 - **Scenario** = מודל שלם (כמה שנות מפתח). **YearState** (בעבר `Scenario`) = מצב של שנה אחת. **keyframes** = שורות ב-`21_scenarios-keyframes`.
