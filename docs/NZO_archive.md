@@ -40,6 +40,7 @@
 - `21_year-summary`: שורת כותרת עם השנה (A1). Predict Year עובר ל-`21_year-summary` בסיום, ו-Calculate Scenarios and Costs ל-`31_scenarios-yearly`.
 - שלב 6: `00_documentation` נכתבת עכשיו לפי use case (תוכן עניינים, מדריך הרצה, תיעוד תפריט) ובפריסה דינמית: כל בלוק מונח אחרי הקודם, ושורת הקישור לתחזית נוגה נשמרת. עודכנו `NZO_core.md`, `README`, `NZO_collaboration_design.md` ודיאגרמת התלויות.
 
+- **גרסת קוד 2.0.0 (17.10.2026):** `CODE_VERSION` עלה מ-1.0.0 ל-2.0.0 (שינוי מבנה הגיליון: הפרדת שני ה-use cases, קידוד לשוניות מחדש, הסרת `14_assumptions-yearly`, לשונית `32_scenarios-charts`, שדה `maxNetDemand`). גרסת הנתונים לא השתנתה (לשוניות 10–13 לא שונו). בעותקי חוקרים נדרשת שינוי שם ידני של לשוניות והרצת `Set up scenario settings`.
 - **תוקן (17.10.2026):** בדיאגרמת use case 2 הלשונית 32 מוצגת כתלויה ב-31 (נבנית ממנה), ולא כפלט מקביל של Run Scenarios.
 - **שונה שם (17.10.2026):** פריט התפריט `Calculate Scenarios and Costs` נקרא עכשיו `Run Scenarios`. שם הפונקציה `calculateScenariosAndCosts` לא השתנה. התיעוד והדיאגרמות עודכנו, ובדיאגרמת use case 2 נוסף הקוביה `32_scenarios-charts`.
 - **הועבר והוסר (17.10.2026):** קווי הרפרנס 13,500 MW (הספק 2025) ו-19,000 MW (הספק 2030), שחורים, מוצגים ב-GW (13.5 ו-19), הועברו לגרף ההספק הפוסילי. גרף שיא ביקוש נטו הוסר מ-32 (הקוד ב-`NZO_removed_code.md`). השדה `maxNetDemand` נשאר במודל וב-31.
