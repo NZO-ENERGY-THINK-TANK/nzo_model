@@ -116,7 +116,7 @@ sequenceDiagram
     participant S as _status
 
     R->>C: עורך keyframes או פרמטרים
-    R->>C: NZO Model → Calculate Scenarios and Costs
+    R->>C: NZO Model → Run Scenarios
     C->>S: בדיקת גרסאות (קוד ונתונים מול המאסטר)
     S-->>R: אזהרה אם העותק לא מעודכן
     C->>C: סימולציה, כתיבה ל-31_scenarios-yearly

@@ -192,7 +192,8 @@ var YEAR_STATE_HEADERS_WITH_COSTS = ['name'].concat(YEAR_STATE_HEADERS).concat([
   'nuclearTotalCummulativeNPV',
   'wasteToEnergyTotalCummulativeNPV',
   'hydrogenTotalCummulativeNPV',
-  'totalCostCummulativeNPV'
+  'totalCostCummulativeNPV',
+  'maxNetDemand'
   
 ]);
 
@@ -644,6 +645,7 @@ function _updateYearStateWithResults(yearState, year_summary) {
   yearState.gasPlusHydrogenWithMargin=year_summary.gasPlusHydrogenWithMargin.value
   yearState.curtailedEnergy = year_summary.curtailedEnergy.value;
   yearState.missingEnergy = year_summary.missingEnergy.value;
+  yearState.maxNetDemand = year_summary.maxNetDemand.value;
   yearState.gasGeneration = year_summary.fossilGeneration.value;
   yearState.nuclearGeneration=year_summary.nuclearGeneration.value;
   yearState.wasteToEnergyGeneration=year_summary.wasteToEnergyGeneration.value;

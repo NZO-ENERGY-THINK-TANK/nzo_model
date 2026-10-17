@@ -1684,3 +1684,14 @@ function saveCosts(costsDb) {
   outputSheet.setFrozenRows(1);
 }
 ```
+
+---
+
+## 17 באוקטובר 2026 – הסרת גרף שיא ביקוש נטו מ-`32_scenarios-charts`
+
+הרשומה הוסרה מ-`SCENARIO_CHART_METRICS` (`scenario-charts.js`). קווי הרפרנס שלה הועברו לגרף ההספק הפוסילי. השדה `maxNetDemand` נשאר במודל וב-31.
+
+```
+  {column: 'maxNetDemand', title: 'Peak net demand (GW)', divisor: 1000, format: '0.0', type: 'column',
+   refLines: [{label: 'הספק 2025 13,500 MW', value: 13.5, color: '#000000'}, {label: 'הספק 2030 19,000 MW', value: 19, color: '#000000'}]},
+```

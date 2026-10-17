@@ -18,9 +18,9 @@
 | `0x`, `_` | מערכת | `00_documentation`, `_meta`, `_status` |
 | `1x` | נתוני בסיס, משותף לשני ה-use cases | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions` |
 | `2x` | **Use case 1: Predict Year** (שנה בודדת) | `20_year-input` (קלט), `21_year-summary`, `22_year-daily`, `23_year-hourly`, `24_year-chart-day`, `25_year-chart-annual`, `29_year-run-history` |
-| `3x` | **Use case 2: תרחישים** | `30_scenarios-input` (קלט: טבלת הגדרות + keyframes), `31_scenarios-yearly` |
+| `3x` | **Use case 2: תרחישים** | `30_scenarios-input` (קלט: טבלת הגדרות + keyframes), `31_scenarios-yearly`, `32_scenarios-charts` (גרפים לכל Scenario, תיבת סימון להשמטה) |
 
-**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Calculate Scenarios and Costs קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_assumptions`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
+**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Run Scenarios קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_assumptions`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
 
 ### קלטים
 
@@ -34,7 +34,7 @@
 | `06_sensitivity-analysis`, `40_stochastic-analysis-input` | (לא בשימוש בקוד מאז 4.10.2026) |
 
 ### פלט והתנהגות
-- אחרי Predict Year הגיליון עובר ל-`21_year-summary` (שורה 1: `output results - year <שנה>`, נתונים משורה 3). אחרי Calculate Scenarios and Costs הוא עובר ל-`31_scenarios-yearly`.
+- אחרי Predict Year הגיליון עובר ל-`21_year-summary` (שורה 1: `output results - year <שנה>`, נתונים משורה 3). אחרי Run Scenarios הוא עובר ל-`31_scenarios-yearly`.
 - `25_year-chart-annual`: שורה 24 כותרות, ושורה 25 נוסחאות `INDEX`+`MATCH` ששולפות עמודות מ-`22_year-daily` לפי הכותרת. הגרף דורש טווח רציף, ולכן היא עותק של נתוני 22. `maxgasgen*10` הוא `maxGasGen×10` לקנה מידה.
 
 ### ליבת הסימולציה – `calculateYear` (בקובץ yearly_model.gs)
@@ -52,7 +52,7 @@
 | פעולה | מה עושה | פלט |
 |---|---|---|
 | Predict Year | סימולציה לשנה אחת לפי `20_year-input` | `23_year-hourly`, `22_year-daily`, `21_year-summary`, `29_year-run-history` |
-| Calculate Scenarios and Costs (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`30_scenarios-input`, שנה אחר שנה | `31_scenarios-yearly` |
+| Run Scenarios (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`30_scenarios-input`, שנה אחר שנה | `31_scenarios-yearly` |
 | Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions`, `_meta`, `_status` |
 | Advanced: Run / Record reference test | בדיקת תרחיש ייחוס מול ערכים שמורים ב-`reference_test_expected.js` | לא כותבות ללשוניות |
 | Advanced: Update data hash / Check data status | רישום גרסת נתונים ו-hash ב-`_meta`, ובדיקה שהנתונים תואמים | `_meta`, `_status` |
@@ -85,7 +85,7 @@
 
 ## 2. מצב נוכחי
 - **בעיה ידועה (Sync):** אין התאמות מקומיות לנתוני בסיס. עריכה ידנית בלשוניות `10`–`13` בעותק נדרסת בסנכרון הבא. חלון האישור של Sync מציג כמה תאים ישתנו, ומזהיר אם נתוני הבסיס בעותק נערכו ידנית. לשינוי קבוע: משנים בגיט ובמאסטר. מנגנון התאמות מקומיות (שלב 10ב) נדחה.
-- **4.10.2026 ו-10.10.2026:** הוסרו מהקוד הניתוחים sensitivity ו-stochastic וכל שרידיהם (הקובץ `stochastic analysis.gs` נמחק). הפרויקט: 11 קבצים, 3,102 שורות. הקוד ב-`NZO_removed_code.md`. בדיקת עשן אחרי הניקיון: Predict Year ו-Calculate Scenarios and Costs עברו ללא שגיאות.
+- **4.10.2026 ו-10.10.2026:** הוסרו מהקוד הניתוחים sensitivity ו-stochastic וכל שרידיהם (הקובץ `stochastic analysis.gs` נמחק). הפרויקט: 11 קבצים, 3,102 שורות. הקוד ב-`NZO_removed_code.md`. בדיקת עשן אחרי הניקיון: Predict Year ו-Run Scenarios עברו ללא שגיאות.
 - כל 7 הבאגים שנמצאו תוקנו ונשמרו, והיסטוריית השינויים המלאה נמצאת ב-`NZO_archive.md` (לא בפרויקט).
 - לא נבדק על הגיליון: הגבלת הזמן בניתוח הסטוכסטי, שאלה יחידה ב-sensitivity, חידוש סריקת scenarios, וכתיבת שורת כותרות ב-`29_year-run-history`.
 - פתוח: שאלות המודל שבסעיף "הנחות מידול שכדאי לאשר", איחוד פורמט ב-`21_year-summary`, ושתי שורות לא בשימוש ב-`40_stochastic-analysis-input`.

@@ -3,6 +3,11 @@ function onOpen() {
 }
 
 function onEdit(e) {
+  try {
+    handleScenarioChartsEdit(e);
+  } catch (err) {
+    console.warn('handleScenarioChartsEdit failed: ' + err);
+  }
   // Only rebuild menu if edit happened in parameters sheet
   if (e.range.getSheet().getName() === SHEET_PARAMETERS) {
     try {
@@ -17,7 +22,7 @@ function buildMenu() {
   var spreadsheet = SpreadsheetApp.getActive();
   var menu = SpreadsheetApp.getUi().createMenu('NZO Model');
   menu.addItem(`Predict Year: ${getParameters().currentYear}` , 'predictYear');
-  menu.addItem('Calculate Scenarios and Costs', 'calculateScenariosAndCosts');
+  menu.addItem('Run Scenarios', 'calculateScenariosAndCosts');
   menu.addSeparator();
   menu.addItem('Sync from master', 'syncFromMaster');
   menu.addSubMenu(SpreadsheetApp.getUi().createMenu('Advanced')
@@ -25,6 +30,7 @@ function buildMenu() {
     .addItem('Record reference test', 'recordReferenceTest')
     .addSeparator()
     .addItem('Set up scenario settings', 'createScenarioSettingsTable')
+    .addItem('Refresh scenario charts', 'refreshScenarioCharts')
     .addSeparator()
     .addItem('Update data hash', 'updateDataHash')
     .addItem('Check data status', 'checkDataStatus')
@@ -64,7 +70,7 @@ function predictYear() {
  * Aggregates results from multiple scenarios into a single master output.
  */
 function calculateScenariosAndCosts() {
-  if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT])) return;
+  if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT, SHEET_SCENARIO_CHARTS])) return;
   var in_data = getInputData();
   var scenarios = readScenariosFromKeyframes();
   var costsDb = getCostsDb();
@@ -78,10 +84,11 @@ function calculateScenariosAndCosts() {
   // Flatten results: Append current scenario's year states to the master list
 
   saveYearStatesOutput(allYearStates);
+  buildScenarioCharts();
   SpreadsheetApp.flush();
 
-  // Switch to the scenario results
-  SpreadsheetApp.setActiveSheet(getOrCreateSheet(SHEET_YEAR_STATES_OUTPUT));
+  // Switch to the scenario charts
+  SpreadsheetApp.setActiveSheet(getOrCreateSheet(SHEET_SCENARIO_CHARTS));
 };
 
 /**

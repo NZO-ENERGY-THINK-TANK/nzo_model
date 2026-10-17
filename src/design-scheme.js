@@ -28,14 +28,18 @@ const DESIGN_SCHEME = {
   '23_year-hourly': 'output',
   '24_year-chart-day': 'charts',
   '25_year-chart-annual': 'charts',
+  '29_year-run-history': 'saved',
 
   '30_scenarios-input': 'input',
   '31_scenarios-yearly': 'output',
-  '29_year-run-history': 'saved',
+  '32_scenarios-charts': 'charts',
   
   '_meta': 'status',
   '_status': 'status'
 };
+
+// Tabs with a protected-role color that hold checkboxes the user clicks: no warning protection (it would pop up on every click).
+const DESIGN_UNPROTECTED_TABS = ['32_scenarios-charts'];
 
 // Calculated cells inside an input tab: grey text + warning-only protection. None at present: 20_year-input has only
 // plain inputs (storage efficiency and depth of discharge, rows 16-17, were formulas reading the removed tab 14_assumptions-yearly until 17.10.2026).
@@ -54,7 +58,7 @@ const DESIGN_NUMBER_FORMATS = {
 const DESIGN_TAB_ORDER = [
   '00_documentation',
   '20_year-input', '21_year-summary', '22_year-daily', '23_year-hourly', '24_year-chart-day', '25_year-chart-annual', '29_year-run-history',
-  '30_scenarios-input', '31_scenarios-yearly',
+  '30_scenarios-input', '31_scenarios-yearly', '32_scenarios-charts',
   '10_demand-yearly', '11_must-run-yearly', '12_raw-data-hourly', '13_assumptions',
   '_meta', '_status'
 ];
@@ -97,7 +101,7 @@ function applyDesignScheme() {
     var def = DESIGN_ROLES[role];
     sheet.setTabColor(def.color);
     _clearDesignProtections(sheet);
-    if (def.protect) {
+    if (def.protect && DESIGN_UNPROTECTED_TABS.indexOf(name) < 0) {
       var p = sheet.protect().setDescription(DESIGN_PROTECTION_TAG + ': ' + def.note);
       p.setWarningOnly(true);
     }
@@ -208,10 +212,11 @@ const DESIGN_MENU_DOCS_ANCHOR = {row: 1, col: 1};
 const DESIGN_MENU_DOCS = [
   ['תפריט NZO Model', 'מה הפעולה עושה', 'לשוניות שמתעדכנות'],
   ['Predict Year', 'מריצה את המודל השנתי לשנה שב-20_year-input!C3: תמהיל ייצור, אחוז מתחדשות, פליטות', '23_year-hourly, 22_year-daily, 21_year-summary, 29_year-run-history'],
-  ['Calculate Scenarios and Costs', 'מריצה את כל ה-scenarios שב-30_scenarios-input ומחשבת עלויות. מבקשת אישור לפני דריסה', '31_scenarios-yearly'],
+  ['Run Scenarios', 'מריצה את כל ה-scenarios שב-30_scenarios-input ומחשבת עלויות. מבקשת אישור לפני דריסה. בסיום פותחת את 32_scenarios-charts', '31_scenarios-yearly, 32_scenarios-charts'],
   ['Sync from master', 'מעתיקה את נתוני הבסיס (10–13) מהמאסטר לעותק שלך, בודקת תקינות (hash וכותרות). לא נוגעת בקלט שלך ובתוצאות. מבקשת אישור לפני דריסה', '10_demand-yearly, 11_must-run-yearly, 12_raw-data-hourly, 13_assumptions, _meta, _status'],
   ['Advanced → Run reference test', 'מריצה את scenario הייחוס ומשווה לערכים השמורים בקוד. PASS פירושו שהתוצאות לא השתנו', 'לא כותבת ללשוניות'],
   ['Advanced → Record reference test', 'מקליטה ערכי ייחוס חדשים. רק לשינוי מכוון בתוצאות, ואז מדביקים ל-reference_test_expected.js', 'לא כותבת ללשוניות'],
+  ['Advanced → Refresh scenario charts', 'בונה מחדש את הגרפים מ-31_scenarios-yearly הקיים, בלי להריץ שוב את המודל. שומרת את סימוני התרחישים', '32_scenarios-charts'],
   ['Advanced → Update data hash', 'רושמת גרסת נתונים וחתימה (hash) של לשוניות 10–13', '_meta, _status'],
   ['Advanced → Check data status', 'בודקת שהנתונים בגליון תואמים לחתימה השמורה, ומציגה גרסת קוד וגרסת נתונים', '_status'],
   ['Advanced → Apply design scheme', 'צובעת לשוניות, מוסיפה הגנות במצב אזהרה, וכותבת את המקרא, את תיעוד התפריט ואת מדריך ההרצה', '00_documentation']
@@ -229,7 +234,7 @@ function _writeMenuDocs(ss) {
 const DESIGN_RUN_GUIDE = [
   ['שני use cases', ''],
   ['Use case 1: Predict Year (שנה בודדת)', 'קלט: 20_year-input (כחול). הרצה: Predict Year. תוצאות: 21–25 (21_year-summary נפתחת בסיום), והיסטוריה ב-29_year-run-history'],
-  ['Use case 2: תרחישים (scenarios)', 'קלט: 30_scenarios-input (טבלת הגדרות לכל scenario ומתחתיה keyframes). הרצה: Calculate Scenarios and Costs. תוצאות: 31_scenarios-yearly'],
+  ['Use case 2: תרחישים (scenarios)', 'קלט: 30_scenarios-input (טבלת הגדרות לכל scenario ומתחתיה keyframes). הרצה: Run Scenarios. תוצאות: 31_scenarios-yearly'],
   ['משותף לשניהם', 'נתוני בסיס 10–13 (מסונכרנים מהמאסטר) בלבד. לשונית קלט של use case אחד אינה משפיעה על האחר'],
   ['בדיקת נתונים', 'Advanced → Check data status: גרסת קוד וגרסת נתונים צריכות להיות תואמות למאסטר'],
   ['', ''],
@@ -263,9 +268,10 @@ const DESIGN_SHEETS_TABLE = [
     ['25_year-chart-annual', 'גרף "יום אחר יום" לכל השנה. העמודות נשלפות מ-22_year-daily לפי הכותרות בשורה 24'],
     ['29_year-run-history', 'יומן הרצות Predict Year: קלט, תוצאות, גרסת קוד וגרסת נתונים']]},
   {title: 'Use case 2: תרחישים (scenarios)', color: '#00695c',
-   note: 'קלט ב-30_scenarios-input, הרצה בתפריט Calculate Scenarios and Costs', tabs: [
+   note: 'קלט ב-30_scenarios-input, הרצה בתפריט Run Scenarios', tabs: [
     ['30_scenarios-input', 'למעלה: טבלת הגדרות לכל scenario (תחזית ביקוש, ריבית, נצילות מימן). מתחתיה: keyframes לפי שנה'],
-    ['31_scenarios-yearly', 'תוצאות כל ה-scenarios ברמה שנתית, כולל עלויות ופליטות']]},
+    ['31_scenarios-yearly', 'תוצאות כל ה-scenarios ברמה שנתית, כולל עלויות ופליטות'],
+    ['32_scenarios-charts', 'גרפים לכל scenario (ציר X: שנים): עלות מהוונת מצטברת, עלות מצטברת לפי משאב עד שנת הסיום (עמודות מוערמות), שיעור אנרגיה מתחדשת, צריכת גז מצטברת (קווים), ובעמודות: הספק פוסילי, הספק סולארי, קיבולת אגירה, צריכת גז שנתית, פליטות CO2 שנתיות והתקנות סולאריות חדשות בשנה. תיבת סימון לכל scenario מסתירה אותו מכל הגרפים, ותיבה ראשית (A3) מסמנת או מנקה את כולם. מתחת לרשימת ה-scenarios טבלת גרפים: תיבת סימון להצגה והסתרה, ומספר סדר לשינוי הסדר (הגרפים מסתדרים מחדש אחרי כל שינוי)']]},
   {title: 'משותף לשני ה-use cases', color: '#6d4c41',
    note: 'נתוני בסיס (מסונכרנים מהמאסטר)', tabs: [
     ['10_demand-yearly', 'ביקוש שנתי (TWh) לפי תרחיש, 2023-2050. מקור: תחזית נוגה. נטען מ-data/yearly_demand.csv'],

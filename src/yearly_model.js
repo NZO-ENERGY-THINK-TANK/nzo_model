@@ -587,6 +587,7 @@ function _calculateYearlySummary(daysPreds, parameters) {
     "maxGasCapacity": Value(0, "MW"),      // PEAK Load (Infrastructure size)
     "maxHydrogenUsageCapacity": Value(0, "MW"), 
     "maxStorageCapacity": Value(0, "MW"),
+    "maxNetDemand": Value(0, "MW"),        // Highest hourly net demand (after DFS) in the year
     "fossilCapacityWithMargin": Value(0, "MW"), // Planning requirement
     "gasPlusHydrogenWithMargin":Value(0,"MW"),
     "maxGasPlusHydrogen": Value(0, "MW"),
@@ -623,6 +624,9 @@ function _calculateYearlySummary(daysPreds, parameters) {
     }
     if (day.maxGasPlusHydrogen+parameters.mustRun > summary.maxGasPlusHydrogen.value) {
       summary.maxGasPlusHydrogen.value = day.maxGasPlusHydrogen+parameters.mustRun;
+    }
+    if (day.maxNetDemand > summary.maxNetDemand.value) {
+      summary.maxNetDemand.value = day.maxNetDemand;
     }
     if (day.maxStorageGen > summary.maxStorageCapacity.value) {
       summary.maxStorageCapacity.value = day.maxStorageGen;
