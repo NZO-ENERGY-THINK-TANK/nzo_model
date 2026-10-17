@@ -154,20 +154,3 @@ function getCostsDb() {
   costs = rows.map(row => new ForecastedParam(row));
   return new CostsDb(costs);
 }
-
-/**
- * Exports the fully calculated cost database to a dedicated output sheet.
- * Performs a full overwrite to ensure no stale data remains from previous runs.
- */
-function saveCosts(costsDb) {
-  var outputSheet = getOrCreateSheet(SHEET_COSTS_OUTPUT);
-
-  // CRITICAL: Clear previous results before writing to avoid mismatched data rows.
-  outputSheet.clearContents();
-  var headers = costsDb.getHeaders();
-
-  // Prepare a single 2D array for a batch write (Best Practice for performance).
-  var rows = [headers].concat(costsDb.toTable());
-  outputSheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
-  outputSheet.setFrozenRows(1);
-}

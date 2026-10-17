@@ -40,6 +40,7 @@
 - `21_year-summary`: שורת כותרת עם השנה (A1). Predict Year עובר ל-`21_year-summary` בסיום, ו-Calculate Scenarios and Costs ל-`31_scenarios-yearly`.
 - שלב 6: `00_documentation` נכתבת עכשיו לפי use case (תוכן עניינים, מדריך הרצה, תיעוד תפריט) ובפריסה דינמית: כל בלוק מונח אחרי הקודם, ושורת הקישור לתחזית נוגה נשמרת. עודכנו `NZO_core.md`, `README`, `NZO_collaboration_design.md` ודיאגרמת התלויות.
 
+- **הוסרו (באישור David, 17.10.2026):** הלשונית `14_assumptions-yearly`, `saveCosts` (`assumptions.js`), הפעולה והפונקציה Calculate Costs (`main.js`), `SHEET_COSTS_OUTPUT` (`yearly_model.js`), וצעד הרענון בסוף Sync. הסיבה: הקוד בונה את הטבלה בזיכרון (`getCostsDb`) ואף קוד או נוסחה לא קראו ממנה. הקוד שנמחק נשמר ב-`NZO_removed_code.md`. הדיאגרמות והתיעוד עודכנו.
 - `20_year-input` שורות 16–17 (נצילות ועומק פריקה של אגירה) הפכו מנוסחאות מ-`14_assumptions-yearly` לקלט רגיל (ברירת מחדל 0.93 ו-0.9), בהתאם ל-use case 2 שבו הם עמודות ב-keyframes. `14_assumptions-yearly` היא עכשיו פלט להצגה בלבד, ללא תלות של use case כלשהו. סכמת העיצוב מאפסת את הצבע והרקע האפורים של C16:C17 (`DESIGN_FORMER_CALCULATED_CELLS`).
 - `21_year-summary`: שורת כותרות `name | units | value` (שורה 2), כותרת ביניים `run details` (שורה 32), וניקוי שארית של הרצות קודמות מתחת לרשימת הפרמטרים (`saveSummary`).
 - דיאגרמת התלויות פוצלה לשתיים, אחת לכל use case: `docs/dependency-diagram-use-case-1/2.svg/.png`, ובקוד `dependency-diagram-data.js` (שתי תמונות) ו-`_writeDependencyDiagram` (כותרת ותמונה לכל use case). הגנרטור `dependency-diagram.make.py` מייצר את הכול (נדרש ImageMagick `convert`).

@@ -1,7 +1,6 @@
 const SHEET_HOURLY_PREDICTED = '23_year-hourly';
 const SHEET_DAILY_PREDICTED = '22_year-daily';
 const SHEET_SUMMARY = '21_year-summary';
-const SHEET_COSTS_OUTPUT = '14_assumptions-yearly'
 
 var HOURLY_PREDICTED_HEADERS = ['date', 'hourOfDay', 'hourOfYear', 'demand','nuclearGeneration','wasteToEnergyGeneration', 'hydrogenUsage','hydrogenCharge','windGeneration', 'storageUsage','v2gUsage', 'mustRun', 'gasUsage', 'solarUsage', 'windUsage','storageSolarCharge', 'storageGasCharge', 'storageDischarge','v2gDischarge', 'curtailedEnergy', 'storageStateEnd', 'netDemand', 'missingEnergy','dfsUsed','hydrogenImported','solarToV2g'];
 

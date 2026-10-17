@@ -3,7 +3,7 @@
  *
  * Copies the base data (the ranges covered by DATA_HASH_RANGES: 10, 11, 12, 13) from the master spreadsheet
  * into this copy, after checking that the master itself was not edited by hand (hash) and that its headers
- * match what the code expects. Then refreshes 14_assumptions-yearly, the design scheme and _status.
+ * match what the code expects. Then refreshes the design scheme and _status.
  *
  * Does not touch: 20_year-input, 30_scenarios-input, 29_year-run-history and every output tab.
  * Local overrides of base values are not supported (known issue): manual edits in the base tabs are overwritten.
@@ -111,14 +111,13 @@ function syncFromMaster() {
   PropertiesService.getDocumentProperties().setProperty(SYNC_PROPERTY_LAST,
     Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm") + ' ' + masterMeta.dataVersion);
 
-  // 8. Refresh derived tabs: 14_assumptions-yearly is not refreshed by Predict Year, so it is recalculated here.
-  calculateCosts();
+  // 8. Refresh the documentation and status tabs
   applyDesignScheme();
   _writeStatus(newHash);
   SpreadsheetApp.flush();
 
   ui.alert('Sync from master',
-    'Done. Data version: ' + masterMeta.dataVersion + '\n14_assumptions-yearly was recalculated.\n\nPrevious results in 29_year-run-history keep their old data version.',
+    'Done. Data version: ' + masterMeta.dataVersion + '\n\nPrevious results in 29_year-run-history keep their old data version.',
     ui.ButtonSet.OK);
 }
 

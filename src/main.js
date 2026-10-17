@@ -17,7 +17,6 @@ function buildMenu() {
   var spreadsheet = SpreadsheetApp.getActive();
   var menu = SpreadsheetApp.getUi().createMenu('NZO Model');
   menu.addItem(`Predict Year: ${getParameters().currentYear}` , 'predictYear');
-  menu.addItem('Calculate Costs', 'calculateCosts');
   menu.addItem('Calculate Scenarios and Costs', 'calculateScenariosAndCosts');
   menu.addSeparator();
   menu.addItem('Sync from master', 'syncFromMaster');
@@ -61,21 +60,11 @@ function predictYear() {
 };
 
 /**
- * Runs the financial calculation module.
- * Retrieves unit costs and computes total project CAPEX/OPEX.
- */
-function calculateCosts() {
- var costsDb = getCostsDb();
- saveCosts(costsDb);
- SpreadsheetApp.flush();
-};
-
-/**
  * Batch Processor: Executes simulation and financial analysis for ALL defined scenarios.
  * Aggregates results from multiple scenarios into a single master output.
  */
 function calculateScenariosAndCosts() {
-  if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT, SHEET_COSTS_OUTPUT])) return;
+  if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT])) return;
   var in_data = getInputData();
   var scenarios = readScenariosFromKeyframes();
   var costsDb = getCostsDb();
@@ -89,7 +78,6 @@ function calculateScenariosAndCosts() {
   // Flatten results: Append current scenario's year states to the master list
 
   saveYearStatesOutput(allYearStates);
-  saveCosts(costsDb);
   SpreadsheetApp.flush();
 
   // Switch to the scenario results

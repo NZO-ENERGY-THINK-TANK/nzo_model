@@ -1638,3 +1638,49 @@ function _writeStatus(state) {
 - main.js menu: submenu "Local overrides" -> registerLocalOverride / markTabAsLocal / cancelLocalOverride
 - sync.js guard: stop when readLocalOverrides().length > 0
 - design-scheme.js: DESIGN_SCHEME 22_local-overrides: input; tab order after 21; tab list row; menu docs row "Local overrides"; ensureOverridesSheet(ss) and applyOverrideMarks() in applyDesignScheme; run guide anchor row 13
+
+---
+
+## 17 באוקטובר 2026 – הסרת `14_assumptions-yearly` ו-Calculate Costs
+
+הלשונית `14_assumptions-yearly` הייתה עותק מחושב של `13_assumptions` לפי שנה, ואף קוד לא קרא ממנה. נשמרו כאן הפונקציות והשורות שנמחקו.
+
+- `yearly_model.js`, שורה 4: `const SHEET_COSTS_OUTPUT = '14_assumptions-yearly'`
+- `sync.js`, סוף Sync: `calculateCosts();` והשורה בהודעת הסיום `\n14_assumptions-yearly was recalculated.`
+- `main.js`, `calculateScenariosAndCosts`: `confirmOverwrite([SHEET_YEAR_STATES_OUTPUT, SHEET_COSTS_OUTPUT])` ו-`saveCosts(costsDb);`
+- `design-scheme.js`: `'14_assumptions-yearly': 'output'` ב-`DESIGN_SCHEME`, ב-`DESIGN_TAB_ORDER`, בשורת התפריט Calculate Costs וב-`DESIGN_SHEETS_TABLE`.
+
+```
+src/main.js: menu item + function calculateCosts
+  menu.addItem('Calculate Costs', 'calculateCosts');
+
+/**
+ * Runs the financial calculation module.
+ * Retrieves unit costs and computes total project CAPEX/OPEX.
+ */
+function calculateCosts() {
+ var costsDb = getCostsDb();
+ saveCosts(costsDb);
+ SpreadsheetApp.flush();
+};
+
+
+
+src/assumptions.js: function saveCosts
+/**
+ * Exports the fully calculated cost database to a dedicated output sheet.
+ * Performs a full overwrite to ensure no stale data remains from previous runs.
+ */
+function saveCosts(costsDb) {
+  var outputSheet = getOrCreateSheet(SHEET_COSTS_OUTPUT);
+
+  // CRITICAL: Clear previous results before writing to avoid mismatched data rows.
+  outputSheet.clearContents();
+  var headers = costsDb.getHeaders();
+
+  // Prepare a single 2D array for a batch write (Best Practice for performance).
+  var rows = [headers].concat(costsDb.toTable());
+  outputSheet.getRange(1, 1, rows.length, headers.length).setValues(rows);
+  outputSheet.setFrozenRows(1);
+}
+```
