@@ -1,62 +1,124 @@
-C={'base':'#8e63ce','input':'#4285f4','output':'#34a853','saved':'#fb8c00','charts':'#00acc1','status':'#9e9e9e'}
-W,H=1120,580
-o=[]
-def box(x,y,w,h,t,role,size=14):
-    o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{C[role]}"/>')
-    o.append(f'<text x="{x+w/2}" y="{y+h/2+5}" text-anchor="middle" fill="#fff" font-size="{size}" font-weight="600">{t}</text>')
-def act(x,y,w,h,lines):
-    o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{min(h/2,20)}" fill="#fff" stroke="#555" stroke-width="1.5"/>')
-    n=len(lines); y0=y+h/2-(n-1)*8+5
-    for i,t in enumerate(lines):
-        o.append(f'<text x="{x+w/2}" y="{y0+i*16}" text-anchor="middle" fill="#222" font-size="14" font-weight="600">{t}</text>')
-def line(d,dash=False,color='#555',arrow=True):
-    da=' stroke-dasharray="6 4"' if dash else ''
-    m=' marker-end="url(#a)"' if arrow else ''
-    o.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="1.6"{da}{m}/>')
-def label(x,y,t,anchor='middle',size=12,color='#666'):
-    o.append(f'<text x="{x}" y="{y}" text-anchor="{anchor}" fill="{color}" font-size="{size}">{t}</text>')
-for x,t in [(115,'Inputs and base data'),(405,'Menu action'),(705,'Output tabs'),(985,'Charts')]:
-    label(x,30,t,size=13,color='#222')
-bx,bw=20,190
-box(bx,50,bw,34,'13_costs','base'); box(bx,100,bw,34,'10_demand-yearly','base'); box(bx,142,bw,34,'11_must-run-yearly','base'); box(bx,184,bw,34,'12_raw-data-hourly','base')
-box(bx,260,bw,34,'20_parameters','input'); box(bx,330,bw,34,'21_scenarios-keyframes','input')
-act(290,48,230,38,['Calculate Costs']); act(290,168,230,48,['Predict Year']); act(290,306,230,62,['Calculate Scenarios','and Costs'])
-label(405,386,'also reads 10-13 and 20_parameters',size=11)
-label(405,230,'reads 20, 10, 11, 12',size=11)
-ox,ow=600,210
-box(ox,50,ow,34,'30_costs-forecast','output')
-box(ox,120,ow,34,'42_hourly-predicted','output'); box(ox,162,ow,34,'41_daily-predicted','output'); box(ox,204,ow,34,'40_year-summary','output')
-box(ox,262,ow,34,'90_run-history','saved'); label(705,312,'logs 20_parameters + 40_year-summary',size=11)
-box(ox,324,ow,34,'50_scenarios-yearly','output')
-box(890,141,190,34,'60_daily-chart','charts'); box(890,264,190,34,'61_yearly-chart','charts')
-# inputs -> predict (bus x=240)
-for y in (117,159,201): line(f'M210,{y} H240',arrow=False)
-line('M210,277 H265',arrow=False)
-line('M240,117 V277',arrow=False)
-line('M240,192 H290')
-# 21 -> scenarios (bus x=265)
-line('M210,347 H265',arrow=False); line('M265,277 V347',arrow=False); line('M265,337 H290')
-# costs
-line('M210,67 H290'); line('M520,67 H600')
-# predict -> outputs
-line('M520,192 H560',arrow=False); line('M560,137 V279',arrow=False)
-line('M560,137 H600'); line('M560,179 H600'); line('M560,221 H600'); line('M560,279 H600',color='#fb8c00')
-# scenarios -> 50 and 30
-line('M520,341 H600'); line('M520,322 H582 V76 H600'.replace('V76 H600','V67'),arrow=False); 
-line('M582,67 H600',arrow=False)
-# charts (sources per tab descriptions, not verified)
-line('M810,137 H850 V158 H890',dash=True); line('M810,179 H850 V158',dash=True,arrow=False)
-line('M810,221 H870 V281 H890',dash=True); line('M810,341 H870 V281',dash=True,arrow=False)
-label(985,320,'chart sources: per tab description',size=11)
-label(985,334,'(to verify)',size=11)
-# 30 -> 20
-line('M705,50 V16 H8 V277 H20',dash=True,color='#4285f4')
-label(360,12,'20_parameters C24/C26 read 30_costs-forecast (HLOOKUP by year)',size=11,color='#4285f4')
-# system
-o.append('<line x1="20" y1="425" x2="1100" y2="425" stroke="#ddd"/>')
-box(bx,455,bw,40,'10-13 (data hash ranges)','base',size=13)
-act(290,453,230,44,['Update data hash','Check data status'])
-line('M210,475 H290'); line('M520,465 H600'); line('M520,485 H600')
-box(ox,448,ow,34,'_meta','status'); box(ox,490,ow,34,'_status','status')
-svg=f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Helvetica, Arial, sans-serif"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>'+'<g transform="translate(0,24)">'+''.join(o)+'</g></svg>'
-open('dep.svg','w').write(svg)
+# Generates the two dependency diagrams (one per use case):
+#   docs/dependency-diagram-use-case-1.svg/.png  (Predict Year)
+#   docs/dependency-diagram-use-case-2.svg/.png  (Scenarios)
+#   docs/dependency-diagram-system.svg/.png      (data version, hash, sync)
+# and src/dependency-diagram-data.js (base64 of both PNGs, used by applyDesignScheme).
+# Run from docs/:  python3 dependency-diagram.make.py   (PNG conversion needs ImageMagick `convert`)
+import base64, re, subprocess
+
+C = {'base': '#8e63ce', 'input': '#4285f4', 'output': '#34a853', 'saved': '#fb8c00', 'charts': '#00acc1', 'status': '#9e9e9e'}
+W = 1120
+
+class Diagram:
+    def __init__(self, height):
+        self.o = []; self.H = height
+    def box(self, x, y, w, h, t, role, size=14):
+        self.o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{C[role]}"/>')
+        self.o.append(f'<text x="{x+w/2}" y="{y+h/2+5}" text-anchor="middle" fill="#fff" font-size="{size}" font-weight="600">{t}</text>')
+    def act(self, x, y, w, h, lines):
+        self.o.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{min(h/2,20)}" fill="#fff" stroke="#555" stroke-width="1.5"/>')
+        n = len(lines); y0 = y + h/2 - (n-1)*8 + 5
+        for i, t in enumerate(lines):
+            self.o.append(f'<text x="{x+w/2}" y="{y0+i*16}" text-anchor="middle" fill="#222" font-size="14" font-weight="600">{t}</text>')
+    def line(self, d, dash=False, color='#555', arrow=True):
+        da = ' stroke-dasharray="6 4"' if dash else ''
+        self.o.append(f'<path d="{d}" fill="none" stroke="{color}" stroke-width="1.6"{da}/>')
+        if arrow:  # explicit arrow head (ImageMagick does not render SVG markers); path uses only M, H, V
+            x = y = px = py = 0
+            for cmd, val in re.findall(r'([MHV])\s*(-?[\d.]+)(?:[ ,](-?[\d.]+))?', d.replace(',', ' ')) and [(m.group(1), m.group(2)) for m in re.finditer(r'([MHV])\s*(-?[\d.]+)', d)]:
+                px, py = x, y
+                if cmd == 'M':
+                    x = float(val)
+                    y = float(re.search(r'M\s*-?[\d.]+[ ,]\s*(-?[\d.]+)', d).group(1))
+                elif cmd == 'H': x = float(val)
+                else: y = float(val)
+            dx = (x > px) - (x < px); dy = (y > py) - (y < py)
+            if dx:
+                pts = f'{x},{y} {x-8*dx},{y-4} {x-8*dx},{y+4}'
+            else:
+                pts = f'{x},{y} {x-4},{y-8*dy} {x+4},{y-8*dy}'
+            self.o.append(f'<polygon points="{pts}" fill="{color}"/>')
+    def label(self, x, y, t, anchor='middle', size=12, color='#666'):
+        self.o.append(f'<text x="{x}" y="{y}" text-anchor="{anchor}" fill="{color}" font-size="{size}">{t}</text>')
+    def svg(self):
+        return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{self.H}" viewBox="0 0 {W} {self.H}" font-family="Helvetica, Arial, sans-serif">'
+                '<rect width="100%" height="100%" fill="#fff"/><g transform="translate(0,40)">' + ''.join(self.o) + '</g></svg>')
+
+def headers(d, title, cols=('Inputs and base data', 'Menu action', 'Output tabs', 'Charts')):
+    d.label(560, -18, title, size=15, color='#222')
+    for x, t in zip((115, 405, 705, 985), cols):
+        d.label(x, 28, t, size=13, color='#222')
+
+bx, bw = 20, 190
+ox, ow = 600, 210
+
+# ---------- Use case 1: Predict Year ----------
+d1 = Diagram(360)
+headers(d1, 'Use case 1: Predict Year (single year)')
+d1.box(bx, 50, bw, 34, '20_year-input', 'input')
+d1.box(bx, 110, bw, 34, '10_demand-yearly', 'base'); d1.box(bx, 152, bw, 34, '11_must-run-yearly', 'base')
+d1.box(bx, 194, bw, 34, '12_raw-data-hourly', 'base')
+d1.act(290, 110, 230, 76, ['Predict Year'])
+d1.label(405, 206, 'reads 20, 10, 11, 12', size=11)
+d1.line('M210,67 H265 V128 H290')
+for y in (127, 169, 211): d1.line(f'M210,{y} H240', arrow=False)
+d1.line('M240,127 V211', arrow=False); d1.line('M240,160 H290')
+d1.box(ox, 110, ow, 34, '23_year-hourly', 'output'); d1.box(ox, 152, ow, 34, '22_year-daily', 'output'); d1.box(ox, 194, ow, 34, '21_year-summary', 'output')
+d1.box(ox, 252, ow, 34, '29_year-run-history', 'saved'); d1.label(705, 302, 'logs 20_year-input + 21_year-summary', size=11)
+d1.line('M520,148 H560', arrow=False); d1.line('M560,127 V269', arrow=False)
+for y in (127, 169, 211): d1.line(f'M560,{y} H600')
+d1.line('M560,269 H600', color='#fb8c00')
+d1.box(890, 110, 190, 34, '24_year-chart-day', 'charts'); d1.box(890, 152, 190, 34, '25_year-chart-annual', 'charts')
+d1.line('M810,127 H890'); d1.line('M810,169 H890')
+d1.label(985, 205, '24: one day, from 23', size=11); d1.label(985, 219, '25: all days, from 22', size=11)
+
+# ---------- Use case 2: Scenarios ----------
+d2 = Diagram(346)
+headers(d2, 'Use case 2: Scenarios')
+d2.box(bx, 50, bw, 34, '30_scenarios-input', 'input')
+d2.box(bx, 110, bw, 34, '10_demand-yearly', 'base'); d2.box(bx, 152, bw, 34, '11_must-run-yearly', 'base')
+d2.box(bx, 194, bw, 34, '12_raw-data-hourly', 'base'); d2.box(bx, 236, bw, 34, '13_assumptions', 'base')
+d2.act(290, 100, 230, 90, ['Calculate Scenarios', 'and Costs'])
+d2.label(405, 210, 'reads 30, 10, 11, 12, 13', size=11)
+d2.label(405, 226, '(not 20_year-input)', size=11)
+d2.line('M210,67 H265 V125 H290')
+for y in (127, 169, 211, 253): d2.line(f'M210,{y} H240', arrow=False)
+d2.line('M240,127 V253', arrow=False); d2.line('M240,160 H290')
+d2.box(ox, 110, ow, 34, '31_scenarios-yearly', 'output')
+d2.box(ox, 190, ow, 34, '14_assumptions-yearly', 'output'); d2.label(705, 240, 'also written (display only, not an input)', size=11)
+d2.line('M520,127 H600'); d2.line('M520,170 H560 V207 H600')
+d2.label(985, 127, '31 also holds', size=11); d2.label(985, 141, 'two charts', size=11)
+
+# ---------- System: data version, hash and sync ----------
+d3 = Diagram(340)
+headers(d3, 'System: data version, hash and sync (not part of a use case)', cols=('Sources', 'Menu action', 'Tabs', ''))
+d3.box(bx, 50, bw, 34, '10-13 (hash ranges)', 'base')
+d3.box(bx, 200, bw, 34, 'MASTER spreadsheet', 'status')
+d3.act(290, 48, 230, 38, ['Update data hash'])
+d3.act(290, 128, 230, 38, ['Check data status'])
+d3.act(290, 200, 230, 60, ['Sync from master'])
+d3.label(405, 276, 'in a researcher copy; then recalculates 14', size=11)
+d3.label(405, 186, 'compares 10-13 with _meta', size=11)
+d3.box(ox, 50, ow, 34, '_meta', 'status'); d3.box(ox, 128, ow, 34, '_status', 'status')
+d3.box(ox, 198, ow, 34, '10-13 and 14', 'base'); d3.label(705, 248, 'overwritten from master', size=11)
+d3.line('M210,67 H290'); d3.line('M210,67 H250 V147 H290')
+d3.line('M210,217 H290')
+d3.line('M520,67 H600'); d3.line('M520,147 H600')
+d3.line('M520,230 H570', arrow=False); d3.line('M570,230 V67', arrow=False)
+d3.line('M570,147 H600'); d3.line('M570,230 H600'); d3.line('M570,67 H600')
+
+# ---------- write files ----------
+b64 = {}
+for n, d in ((1, d1), (2, d2), (3, d3)):
+    name = {1: 'use-case-1', 2: 'use-case-2', 3: 'system'}[n]
+    svg = f'dependency-diagram-{name}.svg'; png = f'dependency-diagram-{name}.png'
+    open(svg, 'w').write(d.svg())
+    subprocess.run(['convert', '-background', 'white', '-density', '96', svg, png], check=True)
+    b64[n] = base64.b64encode(open(png, 'rb').read()).decode()
+heights = {1: d1.H, 2: d2.H, 3: d3.H}
+with open('../src/dependency-diagram-data.js', 'w') as f:
+    f.write('// GENERATED by docs/dependency-diagram.make.py (PNGs of the diagrams, base64). Do not edit by hand.\n')
+    for n in (1, 2, 3):
+        f.write(f"const DEPENDENCY_DIAGRAM_{n}_PNG_BASE64 = '{b64[n]}';\n")
+    f.write(f'const DEPENDENCY_DIAGRAM_SIZE = {{width: {W}, heights: [{heights[1]}, {heights[2]}, {heights[3]}]}};\n')
+print('ok')

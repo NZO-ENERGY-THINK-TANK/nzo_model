@@ -1322,3 +1322,319 @@ function _writeDesignLegend(ss) {
 }
 
 ```
+
+## 2026-10-17 — Step 10b-1 local overrides (never pushed; step 10b deferred as known issue)
+Full `src/overrides.js` plus the related pieces of data-meta.js, main.js, sync.js and design-scheme.js. Restore from here if local overrides are taken up again.
+
+### src/overrides.js
+```js
+/**
+ * Local overrides of base data (step 10b-1 of the collaboration plan).
+ *
+ * A researcher can keep working with values that differ from the master in the base tabs (10-13) without
+ * losing them at the next Sync. Every override is a row in 22_local-overrides:
+ *   tab, cell, header, base_value, local_value, note, created, status
+ * - cell = an A1 address (one row per cell) or '*' for a whole tab that is local (Sync skips it entirely).
+ * - base_value = the master value of that cell at the last sync (or at registration).
+ * - header = "<column header> @ <first two cells of the row>", to detect that the structure changed.
+ * - status = active | conflict (conflict is set by Sync, step 10b-2).
+ *
+ * Because overridden cells differ from the master, data-status checks compare a hash in which overridden
+ * cells are replaced by base_value (computeLiveHashState in data-meta.js).
+ */
+const SHEET_OVERRIDES = '22_local-overrides';
+const OVERRIDES_HEADERS = ['tab', 'cell', 'header', 'base_value', 'local_value', 'note', 'created', 'status'];
+const OVERRIDE_CELL_COLOR = '#fff2cc';
+const OVERRIDE_CONFLICT_COLOR = '#f4cccc';
+const OVERRIDE_MAX_CELLS = 500;
+
+/** Creates 22_local-overrides with its header row if missing. */
+function ensureOverridesSheet(spreadsheet) {
+  var ss = spreadsheet || SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(SHEET_OVERRIDES);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_OVERRIDES, ss.getNumSheets());
+  }
+  var header = sheet.getRange(1, 1, 1, OVERRIDES_HEADERS.length);
+  if (String(header.getValues()[0][0]) !== OVERRIDES_HEADERS[0]) {
+    header.setValues([OVERRIDES_HEADERS]).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/** Reads all overrides: [{rowNumber, tab, cell, header, base, local, note, created, status}]. */
+function readLocalOverrides(spreadsheet) {
+  var ss = spreadsheet || SpreadsheetApp.getActive();
+  var sheet = ss.getSheetByName(SHEET_OVERRIDES);
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, OVERRIDES_HEADERS.length).getValues();
+  var out = [];
+  values.forEach(function(r, i) {
+    if (String(r[0]) === '' || String(r[1]) === '') return;
+    out.push({rowNumber: i + 2, tab: String(r[0]), cell: String(r[1]), header: String(r[2]),
+      base: r[3], local: r[4], note: String(r[5]), created: r[6], status: String(r[7])});
+  });
+  return out;
+}
+
+/** "B12" -> {row: 12, col: 2} */
+function _a1ToRowCol(a1) {
+  var m = /^([A-Z]+)(\d+)$/.exec(a1);
+  if (!m) return null;
+  var col = 0;
+  for (var i = 0; i < m[1].length; i++) col = col * 26 + (m[1].charCodeAt(i) - 64);
+  return {row: Number(m[2]), col: col};
+}
+
+/** The hashed range of a base tab that contains the cell, or null. */
+function _hashRangeContaining(tab, row, col) {
+  for (var i = 0; i < DATA_HASH_RANGES.length; i++) {
+    var r = DATA_HASH_RANGES[i];
+    if (r.sheet === tab && row >= r.row && row < r.row + r.rows && col >= r.col && col < r.col + r.cols) return r;
+  }
+  return null;
+}
+
+function _isBaseTab(name) {
+  return DATA_HASH_RANGES.some(function(r) { return r.sheet === name; });
+}
+
+function _sameValue(a, b) {
+  return _normalizeForHash(a) === _normalizeForHash(b);
+}
+
+/** "<column header> @ <first two cells of the row>" read from the given sheet. */
+function _overrideHeaderLabel(sheet, row, col) {
+  var colHeader = sheet.getRange(1, col).getValue();
+  var key = sheet.getRange(row, 1, 1, 2).getValues()[0];
+  return String(colHeader) + ' @ ' + String(key[0]) + '/' + String(key[1]);
+}
+
+/**
+ * Menu: registers the selected cells as local overrides. The researcher first edits the cells in a base tab,
+ * then selects them and runs this. Only cells that differ from the master are registered.
+ */
+function registerLocalOverride() {
+  var ui = SpreadsheetApp.getUi();
+  var local = SpreadsheetApp.getActive();
+  if (local.getId() === MASTER_SPREADSHEET_ID) {
+    ui.alert('Local overrides', 'This is the master. Local overrides are for researcher copies.', ui.ButtonSet.OK);
+    return;
+  }
+  var sheet = local.getActiveSheet();
+  var tab = sheet.getName();
+  if (!_isBaseTab(tab)) {
+    ui.alert('Local overrides', 'Select cells in a base tab (' + DATA_HASH_RANGES.map(function(r) { return r.sheet; }).join(', ') + ').', ui.ButtonSet.OK);
+    return;
+  }
+  var range = sheet.getActiveRange();
+  if (!range || range.getNumRows() * range.getNumColumns() > OVERRIDE_MAX_CELLS) {
+    ui.alert('Local overrides', 'Select between 1 and ' + OVERRIDE_MAX_CELLS + ' cells. For a whole tab use "Mark current tab as local".', ui.ButtonSet.OK);
+    return;
+  }
+  var masterSheet;
+  try {
+    masterSheet = SpreadsheetApp.openById(MASTER_SPREADSHEET_ID).getSheetByName(tab);
+  } catch (e) {
+    ui.alert('Local overrides', 'Cannot open the master spreadsheet.\n\n' + e, ui.ButtonSet.OK);
+    return;
+  }
+  if (!masterSheet) {
+    ui.alert('Local overrides', 'The master has no tab ' + tab + '.', ui.ButtonSet.OK);
+    return;
+  }
+
+  var existing = readLocalOverrides().filter(function(o) { return o.tab === tab; });
+  var existingCells = {};
+  existing.forEach(function(o) { existingCells[o.cell] = true; });
+
+  var rows = [];
+  var skippedOutside = 0, skippedSame = 0, skippedExisting = 0;
+  var r0 = range.getRow(), c0 = range.getColumn();
+  var localValues = range.getValues();
+  for (var i = 0; i < localValues.length; i++) {
+    for (var j = 0; j < localValues[i].length; j++) {
+      var row = r0 + i, col = c0 + j;
+      var a1 = sheet.getRange(row, col).getA1Notation();
+      if (!_hashRangeContaining(tab, row, col)) { skippedOutside++; continue; }
+      if (existingCells[a1]) { skippedExisting++; continue; }
+      var masterValue = masterSheet.getRange(row, col).getValue();
+      if (_sameValue(masterValue, localValues[i][j])) { skippedSame++; continue; }
+      rows.push({a1: a1, row: row, col: col, base: masterValue, local: localValues[i][j]});
+    }
+  }
+  if (rows.length === 0) {
+    ui.alert('Local overrides', 'Nothing to register.\nSame as master: ' + skippedSame + '\nAlready registered: ' + skippedExisting +
+      '\nOutside the synced ranges (not touched by Sync anyway): ' + skippedOutside, ui.ButtonSet.OK);
+    return;
+  }
+  var resp = ui.prompt('Local overrides',
+    rows.length + ' cell(s) differ from the master and will be registered as local overrides.\nWhy? (required)', ui.ButtonSet.OK_CANCEL);
+  var note = (resp.getResponseText() || '').trim();
+  if (resp.getSelectedButton() !== ui.Button.OK || !note) {
+    if (resp.getSelectedButton() === ui.Button.OK) ui.alert('Local overrides', 'A reason is required. Nothing was registered.', ui.ButtonSet.OK);
+    return;
+  }
+
+  var overridesSheet = ensureOverridesSheet();
+  var created = new Date();
+  var out = rows.map(function(r) {
+    return [tab, r.a1, _overrideHeaderLabel(masterSheet, r.row, r.col), r.base, r.local, note, created, 'active'];
+  });
+  overridesSheet.getRange(overridesSheet.getLastRow() + 1, 1, out.length, OVERRIDES_HEADERS.length).setValues(out);
+  rows.forEach(function(r) {
+    sheet.getRange(r.row, r.col).setBackground(OVERRIDE_CELL_COLOR).setNote('Local override. Master value: ' + r.base + '\n' + note);
+  });
+  SpreadsheetApp.flush();
+  ui.alert('Local overrides', rows.length + ' override(s) registered.', ui.ButtonSet.OK);
+}
+
+/** Menu: marks the active base tab as entirely local. Sync skips it. */
+function markTabAsLocal() {
+  var ui = SpreadsheetApp.getUi();
+  var local = SpreadsheetApp.getActive();
+  if (local.getId() === MASTER_SPREADSHEET_ID) {
+    ui.alert('Local overrides', 'This is the master. Local overrides are for researcher copies.', ui.ButtonSet.OK);
+    return;
+  }
+  var tab = local.getActiveSheet().getName();
+  if (!_isBaseTab(tab)) {
+    ui.alert('Local overrides', 'Open a base tab first (' + DATA_HASH_RANGES.map(function(r) { return r.sheet; }).join(', ') + ').', ui.ButtonSet.OK);
+    return;
+  }
+  if (readLocalOverrides().some(function(o) { return o.tab === tab && o.cell === '*'; })) {
+    ui.alert('Local overrides', tab + ' is already marked as local.', ui.ButtonSet.OK);
+    return;
+  }
+  var resp = ui.prompt('Mark ' + tab + ' as local',
+    'Sync will skip this entire tab. Why? (required)', ui.ButtonSet.OK_CANCEL);
+  var note = (resp.getResponseText() || '').trim();
+  if (resp.getSelectedButton() !== ui.Button.OK || !note) return;
+  var sheet = ensureOverridesSheet();
+  sheet.getRange(sheet.getLastRow() + 1, 1, 1, OVERRIDES_HEADERS.length)
+    .setValues([[tab, '*', '(whole tab)', '', '', note, new Date(), 'active']]);
+  ui.alert('Local overrides', tab + ' is marked as local. Sync will not change it.', ui.ButtonSet.OK);
+}
+
+/**
+ * Menu: cancels overrides. Selected cells in a base tab: the master value is written back and the rows are deleted.
+ * If the active tab is marked as local and no registered cell is selected, the tab mark is removed (values stay
+ * until the next Sync).
+ */
+function cancelLocalOverride() {
+  var ui = SpreadsheetApp.getUi();
+  var local = SpreadsheetApp.getActive();
+  var sheet = local.getActiveSheet();
+  var tab = sheet.getName();
+  var range = sheet.getActiveRange();
+  var all = readLocalOverrides().filter(function(o) { return o.tab === tab; });
+  if (all.length === 0) {
+    ui.alert('Local overrides', 'No local overrides registered for ' + tab + '.', ui.ButtonSet.OK);
+    return;
+  }
+  var cellOverrides = all.filter(function(o) { return o.cell !== '*'; });
+  var inSelection = cellOverrides.filter(function(o) {
+    var rc = _a1ToRowCol(o.cell);
+    return rc && range && rc.row >= range.getRow() && rc.row < range.getRow() + range.getNumRows() &&
+      rc.col >= range.getColumn() && rc.col < range.getColumn() + range.getNumColumns();
+  });
+  var tabMark = all.filter(function(o) { return o.cell === '*'; })[0];
+  var overridesSheet = ensureOverridesSheet();
+
+  if (inSelection.length > 0) {
+    var answer = ui.alert('Cancel local override',
+      inSelection.length + ' override(s) in the selection will be cancelled. The master value is written back.\nContinue?', ui.ButtonSet.YES_NO);
+    if (answer !== ui.Button.YES) return;
+    inSelection.forEach(function(o) {
+      var cell = sheet.getRange(o.cell);
+      cell.setValue(o.base).setBackground(null).clearNote();
+    });
+    _deleteOverrideRows(overridesSheet, inSelection.map(function(o) { return o.rowNumber; }));
+    ui.alert('Local overrides', inSelection.length + ' override(s) cancelled.', ui.ButtonSet.OK);
+    return;
+  }
+  if (tabMark) {
+    var a2 = ui.alert('Cancel local override', tab + ' is marked as local. Remove the mark? (The values stay until the next Sync.)', ui.ButtonSet.YES_NO);
+    if (a2 !== ui.Button.YES) return;
+    _deleteOverrideRows(overridesSheet, [tabMark.rowNumber]);
+    ui.alert('Local overrides', 'The mark was removed. Run Sync from master to restore the master values.', ui.ButtonSet.OK);
+    return;
+  }
+  ui.alert('Local overrides', 'No registered override in the selection.', ui.ButtonSet.OK);
+}
+
+function _deleteOverrideRows(sheet, rowNumbers) {
+  rowNumbers.sort(function(a, b) { return b - a; }).forEach(function(n) { sheet.deleteRow(n); });
+}
+
+/** Re-applies the override look (background and note) to registered cells. Called by applyDesignScheme. */
+function applyOverrideMarks() {
+  var ss = SpreadsheetApp.getActive();
+  readLocalOverrides().forEach(function(o) {
+    if (o.cell === '*') return;
+    var sheet = ss.getSheetByName(o.tab);
+    if (!sheet) return;
+    sheet.getRange(o.cell)
+      .setBackground(o.status === 'conflict' ? OVERRIDE_CONFLICT_COLOR : OVERRIDE_CELL_COLOR)
+      .setNote('Local override. Master value: ' + o.base + '\n' + o.note);
+  });
+}
+```
+
+### data-meta.js pieces
+```js
+ * @param {Array=} reverts [{sheet, row, col, value}]: cells whose value is replaced before hashing (local overrides
+ *   are replaced by their base_value, see overrides.js).
+ */
+function computeDataHash(spreadsheet, reverts) {
+ * Hash of the live data as it should equal the master's: cells with a local override are replaced by their
+ * base_value. Tabs marked as local ('*') cannot be compared and are listed in partialTabs.
+ * @return {{hash: string, partialTabs: string[], overrideCells: number}}
+ */
+function computeLiveHashState() {
+  var overrides = readLocalOverrides();
+  var reverts = [];
+  var partial = [];
+  overrides.forEach(function(o) {
+    if (o.cell === '*') {
+      if (partial.indexOf(o.tab) < 0) partial.push(o.tab);
+      return;
+    }
+    var rc = _a1ToRowCol(o.cell);
+    if (rc) reverts.push({sheet: o.tab, row: rc.row, col: rc.col, value: o.base});
+  });
+  return {hash: computeDataHash(null, reverts), partialTabs: partial, overrideCells: reverts.length};
+}
+ * Writes _status from the recorded _meta and a live hash state ({hash, partialTabs, overrideCells}).
+ * Returns the match flag: true, false, or the text 'n/a (local tab: ...)' when a whole tab is local.
+ */
+function _writeStatus(state) {
+  var meta = getDataMeta();
+  var match = meta.dataHash !== '' && meta.dataHash === state.hash;
+  var shown = match;
+  if (meta.dataHash === '') shown = 'NO HASH RECORDED';
+  else if (state.partialTabs && state.partialTabs.length > 0) shown = 'n/a (local tab: ' + state.partialTabs.join(', ') + ')';
+  var sheet = getOrCreateSheet(SHEET_STATUS);
+  var rows = [
+    ['name', 'value'],
+    ['code_version', CODE_VERSION],
+    ['data_version', meta.dataVersion],
+    ['data_hash_match', shown],
+    ['checked_at', new Date()],
+    ['last_sync', PropertiesService.getDocumentProperties().getProperty(SYNC_PROPERTY_LAST) || ''],
+    ['local_overrides', (state.overrideCells || 0) + ' cell(s)' + ((state.partialTabs || []).length ? ', local tabs: ' + state.partialTabs.join(', ') : '')]
+  ];
+  sheet.clearContents();
+  sheet.getRange(1, 1, rows.length, 2).setValues(rows);
+  sheet.setFrozenRows(1);
+  var color = (typeof shown === 'string' && shown.indexOf('n/a') === 0) ? '#fff2cc' : (match ? '#b7e1cd' : '#f4c7c3');
+  sheet.getRange(4, 2).setBackground(color);
+  return shown === 'NO HASH RECORDED' ? false : (typeof shown === 'string' ? shown : match);
+}
+```
+
+### other pieces
+- main.js menu: submenu "Local overrides" -> registerLocalOverride / markTabAsLocal / cancelLocalOverride
+- sync.js guard: stop when readLocalOverrides().length > 0
+- design-scheme.js: DESIGN_SCHEME 22_local-overrides: input; tab order after 21; tab list row; menu docs row "Local overrides"; ensureOverridesSheet(ss) and applyOverrideMarks() in applyDesignScheme; run guide anchor row 13

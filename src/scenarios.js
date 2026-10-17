@@ -24,6 +24,8 @@ class Scenario{
     this.hydrogenImportCapacity=yearStates[yearStates.length-1].hydrogenImportCapacity
     this.dfsHoursPerYear=yearStates[yearStates.length -1].dfsHoursPerYear
     this.dfsReductionPerHour=yearStates[yearStates.length -1].dfsReductionPerHour
+    // Per-scenario assumptions (demand forecast, interest, hydrogen efficiency); set from the 21_ settings table.
+    this.settings = null
     // Initialize containers
     this.yearStateByYear = {}
     this.years = yearStates
@@ -58,7 +60,13 @@ class Scenario{
    * @param {Object} in_data - The global input data (weather patterns, demand curves).
    */
   simulate(in_data) {
+    if (!this.settings) {
+      throw new Error("Scenario '" + this.name + "' has no settings (see scenario-settings.js)");
+    }
     let scen_data = Object.assign({}, in_data)//copy
+    // All scenario inputs come from 30_scenarios-input: the demand forecast and the other settings are per scenario.
+    scen_data.scenarioSettings = this.settings;
+    scen_data.futureForecast = forecastForScenario(in_data, this.settings.demandForecast);
     for (var i = 0; i < this.years.length; ++i) {
       var yearState = this.years[i];
       // OPTIMIZATION:
@@ -89,6 +97,11 @@ class Scenario{
    * @param {Object} parameters - Contains the 'interestRate' (Discount Rate).
    */
   calculateCosts(costsDb, parameters) {
+    if (!this.settings) {
+      throw new Error("Scenario '" + this.name + "' has no settings (see scenario-settings.js)");
+    }
+    // The discount rate is a per-scenario setting (30_scenarios-input), not a global parameter.
+    parameters = Object.assign({}, parameters, {interestRate: this.settings.interestRate});
     // Temporary arrays to hold the cash flow for each category over the years
     var byYear = {
       solarCost: [],

@@ -1,5 +1,5 @@
-const SHEET_SCENARIO_KEYFRAMES = '21_scenarios-keyframes'
-const SHEET_YEAR_STATES_OUTPUT = '50_scenarios-yearly'
+const SHEET_SCENARIO_KEYFRAMES = '30_scenarios-input'
+const SHEET_YEAR_STATES_OUTPUT = '31_scenarios-yearly'
 
 var DEFAULT_YEAR_STATE_PARAMS = {
   'year': 2050,
@@ -522,10 +522,10 @@ class YearState{
     this.gasVarOpex = this.fossilGeneration * 1000 * costsDb.get('ccgt', 'var-opex', this.year);
     this.gasFuel = this.fossilGeneration * 1000 * costsDb.get('ccgt', 'fuel', this.year);
     // Pollution Calculation
-    this.gasCo2 = this.fossilGeneration * parameters.ccgtCo2EmissionFactor / 1000;
-    this.gasNox = this.fossilGeneration * parameters.ccgtNoxEmissionFactor / 1000;
-    this.gasSox = this.fossilGeneration * parameters.ccgtSoxEmissionFactor / 1000;
-    this.gasPmx = this.fossilGeneration * parameters.ccgtPmxEmissionFactor / 1000;
+    this.gasCo2 = this.fossilGeneration * costsDb.get('ccgt-emissions', 'co2', this.year) / 1000;
+    this.gasNox = this.fossilGeneration * costsDb.get('ccgt-emissions', 'nox', this.year) / 1000;
+    this.gasSox = this.fossilGeneration * costsDb.get('ccgt-emissions', 'sox', this.year) / 1000;
+    this.gasPmx = this.fossilGeneration * costsDb.get('ccgt-emissions', 'pmx', this.year) / 1000;
     // Pollution Pricing (Externalities)
     this.gasCo2Cost = this.gasCo2 * costsDb.get('emissions', 'co2', this.year);
     this.gasCo2Cummulative=previousYear.gasCo2Cummulative+this.gasCo2
@@ -587,7 +587,8 @@ var ZERO_YEAR_STATE = new YearState(
  */
 function readScenariosFromKeyframes() {
   // 1. Raw Data Ingestion
-  var rows = readTableFromSheet(SHEET_SCENARIO_KEYFRAMES, 1, KEYFRAME_HEADERS);
+  assertScenarioLayout();
+  var rows = readTableFromSheet(SHEET_SCENARIO_KEYFRAMES, KEYFRAMES_HEADER_ROW, KEYFRAME_HEADERS);
   var yearStates = [];
   var lastYearState = null;
   // 2. Sequential Processing
@@ -607,7 +608,7 @@ function readScenariosFromKeyframes() {
   });
   // 4. Factory Assembly
   // Group the flat list of years into organized Scenario objects.
-  return groupYearsIntoScenarios(yearStates);
+  return applyScenarioSettings(groupYearsIntoScenarios(yearStates));
 }
 
 /**

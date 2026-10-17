@@ -1,14 +1,7 @@
-const SHEET_PARAMETERS = '20_parameters'
+const SHEET_PARAMETERS = '20_year-input'
 
 var PARAMETER_TO_VARIABLE_NAME = {
-  'solar average yearly production hours': 'solarKwToKwhYearly',
-  'solar capacity in reference year': 'solarCapacityRefYear',
-  'wind capacity in reference year': 'windCapacityRefYear',
-  'wind average yearly production hours': 'windKwToKwhYearly',
-  'total demand reference year': 'totalEnergyDemandYearlyRefYear',
   'predicted year': 'currentYear',
-  'predicted total demand': 'totalEnergyDemandYearly',
-  'predicted total demand factor': 'futureDemandFactor',
   'predicted solar capacity': 'solarCapacity',
   'predicted wind capactiy': 'windCapacity',
   'nuclear Capacity': 'nuclearCapacity',
@@ -18,16 +11,8 @@ var PARAMETER_TO_VARIABLE_NAME = {
   'Hydrogen Import capacity':'hydrogenImportCapacity',
   'Hydrogen efficenty':'hydrogenEfficenty',
   'predicted storage energy capacity': 'storageEnergy',
-  'predicted storage capacity limit': 'storageCapacity',
   'storage efficiency': 'storageEfficiency',
-  'storage efficiency sqrt': 'storageEfficiencySqrt',
   'storage depth of discharge': 'storageDepthOfDischarge',
-  'fossil must run': 'mustRun',
-  'CO2-ccgt': 'ccgtCo2EmissionFactor',
-  'NOX-ccgt': 'ccgtNoxEmissionFactor',
-  'SOX-ccgt': 'ccgtSoxEmissionFactor',
-  'PMx-ccgt': 'ccgtPmxEmissionFactor',
-  'interest': 'interestRate',
   'dfsHoursPerYear':'dfsHoursPerYear',
   'dfsReductionPerHour':'dfsReductionPerHour',
   'V2GEnergy':'v2gEnergy'
@@ -91,6 +76,9 @@ function parametersFromYearState(in_data, yearState,i) {
   params.wasteToEnergyCapacity=yearState.wasteToEnergyCapacity;
   params.hydrogenProductionCapacity=yearState.hydrogenProductionCapacity;
   params.hydrogenImportCapacity=yearState.hydrogenImportCapacity
+  // Per-scenario settings (30_scenarios-input settings table)
+  params.hydrogenEfficenty = in_data.scenarioSettings.hydrogenEfficiency;
+  params.interestRate = in_data.scenarioSettings.interestRate;
 
   // Constraint: Force Hydrogen storage to 0 in the base year (2025) as infrastructure doesn't exist yet
   if (i==0){

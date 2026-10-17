@@ -4,12 +4,6 @@ const REFERENCE_EXPECTED = {
   "scenario": "Base",
   "recorded": "2026-10-10T15:55:39.869Z",
   "inputs": {
-    "ccgtCo2EmissionFactor": 486,
-    "ccgtNoxEmissionFactor": 0.26,
-    "ccgtPmxEmissionFactor": 0.01,
-    "ccgtSoxEmissionFactor": 0.02,
-    "hydrogenEfficenty": 0.5,
-    "interestRate": 0.06,
     "solarCapacityRefYear": 4844.887647058824,
     "solarKwToKwhYearly": 1700,
     "totalEnergyDemandYearlyRefYear": 77005378,

@@ -25,6 +25,8 @@ function buildMenu() {
     .addItem('Run reference test', 'runReferenceTest')
     .addItem('Record reference test', 'recordReferenceTest')
     .addSeparator()
+    .addItem('Set up scenario settings', 'createScenarioSettingsTable')
+    .addSeparator()
     .addItem('Update data hash', 'updateDataHash')
     .addItem('Check data status', 'checkDataStatus')
     .addSeparator()
@@ -53,6 +55,9 @@ function predictYear() {
 
   // 5. Force an immediate UI update so the user sees results instantly
   SpreadsheetApp.flush();
+
+  // 6. Switch to the run summary
+  SpreadsheetApp.setActiveSheet(getOrCreateSheet(SHEET_SUMMARY));
 };
 
 /**
@@ -86,6 +91,9 @@ function calculateScenariosAndCosts() {
   saveYearStatesOutput(allYearStates);
   saveCosts(costsDb);
   SpreadsheetApp.flush();
+
+  // Switch to the scenario results
+  SpreadsheetApp.setActiveSheet(getOrCreateSheet(SHEET_YEAR_STATES_OUTPUT));
 };
 
 /**

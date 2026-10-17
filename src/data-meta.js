@@ -16,7 +16,7 @@ const SHEET_MUST_RUN_INPUT = '11_must-run-yearly';
 
 
 const DATA_HASH_RANGES = [
-  {sheet: '13_costs', row: 1, col: 1, rows: 56, cols: 14, pick: null},
+  {sheet: '13_assumptions', row: 1, col: 1, rows: 60, cols: 14, pick: null},
   {sheet: SHEET_DEMAND_INPUT, row: 2, col: 1, rows: 28, cols: 3, pick: null},
   {sheet: SHEET_MUST_RUN_INPUT, row: 2, col: 1, rows: 28, cols: 2, pick: null},
   {sheet: '12_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 14, pick: null}
@@ -145,7 +145,7 @@ function checkDataStatus() {
 
 /**
  * Identity of a run: who, which code, which data, and whether the data still matches _meta.
- * Written to every row of 90_run-history .
+ * Written to every row of 29_year-run-history .
  * @return {{run_id, researcher, code_version, data_version, data_hash_match}}
  */
 function getRunMetadata() {

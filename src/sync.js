@@ -3,10 +3,10 @@
  *
  * Copies the base data (the ranges covered by DATA_HASH_RANGES: 10, 11, 12, 13) from the master spreadsheet
  * into this copy, after checking that the master itself was not edited by hand (hash) and that its headers
- * match what the code expects. Then refreshes 30_costs-forecast, the design scheme and _status.
+ * match what the code expects. Then refreshes 14_assumptions-yearly, the design scheme and _status.
  *
- * Does not touch: 20_parameters, 21_scenarios-keyframes, 90_run-history and every output tab.
- * Local overrides of base values are step 10b and not part of this file yet.
+ * Does not touch: 20_year-input, 30_scenarios-input, 29_year-run-history and every output tab.
+ * Local overrides of base values are not supported (known issue): manual edits in the base tabs are overwritten.
  *
  * Steps run in a fixed order; everything is checked before the first cell is written.
  */
@@ -14,7 +14,7 @@ const SYNC_PROPERTY_LAST = 'last_sync';
 
 // Headers (row 1) that the code relies on in each synced tab. Costs: exact order (readTableFromSheet checks position).
 const SYNC_REQUIRED_HEADERS = {
-  '13_costs': {ordered: true, headers: function() { return FORECASTED_PARAM_HEADERS; }},
+  '13_assumptions': {ordered: true, headers: function() { return FORECASTED_PARAM_HEADERS; }},
   '10_demand-yearly': {ordered: false, headers: function() {
     return ['year'].concat(Object.keys(DEMAND_FORECAST_COLUMNS).map(function(k) { return DEMAND_FORECAST_COLUMNS[k]; }));
   }},
@@ -73,13 +73,19 @@ function syncFromMaster() {
     return;
   }
 
-  // 5. Confirm.
-  var tabs = DATA_HASH_RANGES.map(function(r) { return r.sheet; });
-  var answer = ui.alert('Sync from master',
-    'Data version: ' + (localMeta.dataVersion || '(none)') + '  →  ' + masterMeta.dataVersion + '\n\n' +
-    'The base-data ranges of these tabs will be overwritten with the master values:\n' + tabs.join('\n') +
-    '\n\nYour inputs (20, 21) and results (90 and output tabs) are not touched. Continue?',
-    ui.ButtonSet.YES_NO);
+  // 5. Count the cells that will change, then confirm.
+  var diff = _syncCountDifferences(master, local);
+  var handEdited = localMeta.dataHash !== '' && localHash !== localMeta.dataHash;
+  var lines = diff.perTab.map(function(t) { return t.sheet + ': ' + t.count + ' cell(s) change'; });
+  var msg = 'Data version: ' + (localMeta.dataVersion || '(none)') + '  →  ' + masterMeta.dataVersion + '\n\n' +
+    'The base-data ranges will be overwritten with the master values:\n' + lines.join('\n') + '\n';
+  if (diff.examples.length > 0) msg += '\nFirst changes: ' + diff.examples.join(', ') + '\n';
+  if (handEdited) {
+    msg += '\nWARNING: the base data in this copy was edited by hand after the last sync (it no longer matches ' +
+      (localMeta.dataVersion || 'its recorded version') + '). Those edits will be overwritten and are not kept.\n';
+  }
+  msg += '\nYour inputs (20, 21) and results (90 and output tabs) are not touched. Continue?';
+  var answer = ui.alert('Sync from master', msg, ui.ButtonSet.YES_NO);
   if (answer !== ui.Button.YES) return;
 
   // 6. Copy values and number formats range by range.
@@ -105,15 +111,42 @@ function syncFromMaster() {
   PropertiesService.getDocumentProperties().setProperty(SYNC_PROPERTY_LAST,
     Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm") + ' ' + masterMeta.dataVersion);
 
-  // 8. Refresh derived tabs: 30_costs-forecast is not refreshed by Predict Year, so it is recalculated here.
+  // 8. Refresh derived tabs: 14_assumptions-yearly is not refreshed by Predict Year, so it is recalculated here.
   calculateCosts();
   applyDesignScheme();
   _writeStatus(newHash);
   SpreadsheetApp.flush();
 
   ui.alert('Sync from master',
-    'Done. Data version: ' + masterMeta.dataVersion + '\n30_costs-forecast was recalculated.\n\nPrevious results in 90_run-history keep their old data version.',
+    'Done. Data version: ' + masterMeta.dataVersion + '\n14_assumptions-yearly was recalculated.\n\nPrevious results in 29_year-run-history keep their old data version.',
     ui.ButtonSet.OK);
+}
+
+/**
+ * Counts, per hash range, the cells whose value differs between master and this copy.
+ * @return {{perTab: {sheet: string, count: number}[], examples: string[]}} examples: first 5 changed cells (A1)
+ */
+function _syncCountDifferences(master, local) {
+  var perTab = [];
+  var examples = [];
+  DATA_HASH_RANGES.forEach(function(r) {
+    var a = master.getSheetByName(r.sheet).getRange(r.row, r.col, r.rows, r.cols).getValues();
+    var targetSheet = local.getSheetByName(r.sheet);
+    var b = targetSheet.getRange(r.row, r.col, Math.min(r.rows, targetSheet.getMaxRows() - r.row + 1),
+      Math.min(r.cols, targetSheet.getMaxColumns() - r.col + 1)).getValues();
+    var count = 0;
+    for (var i = 0; i < r.rows; i++) {
+      for (var j = 0; j < r.cols; j++) {
+        var other = (i < b.length && j < b[i].length) ? b[i][j] : '';
+        if (_normalizeForHash(a[i][j]) !== _normalizeForHash(other)) {
+          count++;
+          if (examples.length < 5) examples.push(r.sheet + '!' + targetSheet.getRange(r.row + i, r.col + j).getA1Notation());
+        }
+      }
+    }
+    perTab.push({sheet: r.sheet, count: count});
+  });
+  return {perTab: perTab, examples: examples};
 }
 
 /**

@@ -1,5 +1,5 @@
 const SHEET_REF_YEAR_HOURLY = '12_raw-data-hourly'
-// Demand forecast names (20_parameters 'demand-forecast') -> column header in 10_demand-yearly (data/yearly_demand.csv)
+// Demand forecast names (20_year-input 'demand-forecast') -> column header in 10_demand-yearly (data/yearly_demand.csv)
 const DEMAND_FORECAST_COLUMNS = {
   'Noga conservative': 'noga23_conservative_twh',
   'Noga BAU': 'noga23_bau_twh'
@@ -12,16 +12,41 @@ const DEMAND_FORECAST_COLUMNS = {
  */
 function getInputData() {
   var params = getParameters();
-  var futureForecast = futureDemandForecast();
   var hoursGen = _getHoursGeneration();
+  // Reference-year constants are computed from the hourly data, not read from 20_year-input.
+  update(params, referenceYearParameters(hoursGen));
+  var futureForecast = futureDemandForecast();
   return {
     hoursGen,
     futureForecast,
+    forecastCache: {},
     // Merge strategy: Update static parameters with dynamic values derived from the forecast
     parameters: update(params, forecastParameters(params, futureForecast))
   };
 };
 
+
+/**
+ * Reference-year (2023) constants, computed from the hourly data (single source for Predict Year and scenario runs).
+ * Installed capacity = annual generation / effective hours per year (SOLAR_/WIND_EFFECTIVE_HOURS_PER_YEAR in config.js).
+ * @param {Array<Object>} hoursGen - Output of _getHoursGeneration().
+ * @return {Object} solarKwToKwhYearly, windKwToKwhYearly, solarCapacityRefYear, windCapacityRefYear, totalEnergyDemandYearlyRefYear
+ */
+function referenceYearParameters(hoursGen) {
+  var solar = 0, wind = 0, total = 0;
+  hoursGen.forEach(function(h) {
+    solar += h.solarGen;
+    wind += h.windGeneration;
+    total += h.totalGen;
+  });
+  return {
+    solarKwToKwhYearly: SOLAR_EFFECTIVE_HOURS_PER_YEAR,
+    windKwToKwhYearly: WIND_EFFECTIVE_HOURS_PER_YEAR,
+    solarCapacityRefYear: solar / SOLAR_EFFECTIVE_HOURS_PER_YEAR,
+    windCapacityRefYear: wind / WIND_EFFECTIVE_HOURS_PER_YEAR,
+    totalEnergyDemandYearlyRefYear: total
+  };
+}
 
 /**
  * Private Helper: Parses raw hourly data into structured objects.
@@ -107,12 +132,16 @@ function _readYearlyTable(sheetName, requiredColumns) {
 /**
  * Reads the long-term electricity demand forecast (2023-2050) from 10_demand-yearly (data/yearly_demand.csv)
  * and the must-run capacity from 11_must-run-yearly (data/must_run_yearly.csv).
- * The demand forecast is chosen by 20_parameters 'demand-forecast' and mapped by DEMAND_FORECAST_COLUMNS.
+ * The demand forecast is chosen by 20_year-input 'demand-forecast' and mapped by DEMAND_FORECAST_COLUMNS.
  * * @return {Object} A map structure: { Year: { demand (MWh), mustRun (MW) } }
  */
-function futureDemandForecast() {
-  var scenarioRow = readParams().filter(function(row) { return row[0] === 'demand-forecast'; })[0];
-  var scenario = scenarioRow ? scenarioRow[2] : undefined;
+function futureDemandForecast(forecastName) {
+  var scenario = forecastName;
+  if (scenario === undefined) {
+    // Predict Year: the forecast is chosen in 20_year-input.
+    var scenarioRow = readParams().filter(function(row) { return row[0] === 'demand-forecast'; })[0];
+    scenario = scenarioRow ? scenarioRow[2] : undefined;
+  }
   var demandColumn = DEMAND_FORECAST_COLUMNS[scenario];
   if (!demandColumn) {
     throw new Error("Unknown demand-forecast '" + scenario + "'. Expected one of: " + Object.keys(DEMAND_FORECAST_COLUMNS).join(', '));
@@ -133,3 +162,15 @@ function futureDemandForecast() {
   });
   return futureForecast
 };
+
+
+/**
+ * Forecast for one scenario (by the demand-forecast name in its settings). Read once per name and kept in in_data.forecastCache.
+ */
+function forecastForScenario(in_data, forecastName) {
+  if (!in_data.forecastCache) in_data.forecastCache = {};
+  if (!in_data.forecastCache[forecastName]) {
+    in_data.forecastCache[forecastName] = futureDemandForecast(forecastName);
+  }
+  return in_data.forecastCache[forecastName];
+}

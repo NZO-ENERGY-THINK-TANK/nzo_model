@@ -9,7 +9,7 @@
 | תיקייה | תוכן |
 |---|---|
 | `src/` | קוד Apps Script (בהמשך: `clasp clone`) |
-| `data/` | נתוני בסיס בקבצי CSV (`13_costs`, `03_future-yearly-demand`, `12_raw-data-hourly`) |
+| `data/` | נתוני בסיס בקבצי CSV (`13_assumptions`, `03_future-yearly-demand`, `12_raw-data-hourly`) |
 | `reference/` | תרחיש ייחוס ותוצאותיו הצפויות |
 | `charts/` | קטלוג תבניות גרפים |
 | `docs/` | תיעוד: מסמך העיצוב, `NZO_core.md`, `NZO_archive.md`, `NZO_removed_code.md` |

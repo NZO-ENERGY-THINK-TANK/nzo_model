@@ -10,18 +10,32 @@
 
 מודל לתכנון משק החשמל בישראל עד 2050. השאלה המרכזית: בהינתן תמהיל של סולארי, רוח, אגירה, גרעין, פסולת לאנרגיה, מימן, V2G וניהול ביקוש (DFS), מה יהיה נתח האנרגיה הנקייה, כמה גז עוד יידרש (אנרגיה והספק), ומה העלות הכוללת לאורך השנים (NPV).
 
+### שני use cases ולשוניות לפי קוד (מאוקטובר 2026)
+קידוד הלשוניות לפי use case: הספרה הראשונה קובעת את הקבוצה, ולכל use case יש דף קלט אחד.
+
+| קוד | קבוצה | לשוניות |
+|---|---|---|
+| `0x`, `_` | מערכת | `00_documentation`, `_meta`, `_status` |
+| `1x` | נתוני בסיס ועלויות, משותף לשני ה-use cases | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions`, `14_assumptions-yearly` (מחושבת מ-13 ב-Calculate Costs) |
+| `2x` | **Use case 1: Predict Year** (שנה בודדת) | `20_year-input` (קלט), `21_year-summary`, `22_year-daily`, `23_year-hourly`, `24_year-chart-day`, `25_year-chart-annual`, `29_year-run-history` |
+| `3x` | **Use case 2: תרחישים** | `30_scenarios-input` (קלט: טבלת הגדרות + keyframes), `31_scenarios-yearly` |
+
+**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Calculate Scenarios and Costs קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_assumptions`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
+
 ### קלטים
 
 | לשונית | תוכן |
 |---|---|
-| `20_parameters` | הנחות יסוד: שעות ייצור, הספקים, שנת יעד, אגירה, פליטות, ריבית. חלק מהתאים מחושבים מתוך `30_costs-forecast` (בנוסחת HLOOKUP לפי שנת היעד) |
-| `12_raw-data-hourly` | פרופיל שעתי של שנת ייחוס (8,760 שעות): ביקוש, סולארי, רוח |
-| `03_future-yearly-demand` | תחזית ביקוש שנתית ל-2023–2050 לפי התרחיש שנבחר |
-| `13_costs` | CAPEX, OPEX, דלק, אורך חיים, פליטות, WACC. נקודות לשנים 2022/2025/…/2050, והקוד משלים את השנים שביניהן |
-| `21_scenarios-keyframes` | מפות דרכים ידניות: שנות מפתח (keyframes) לכל Scenario |
-| `20_scenarios-input` | טווחים לסריקה אוטומטית (min, max, interval) |
-| `06_sensitivity-analysis` | (לא בשימוש בקוד מאז 4.10.2026) שינויים באחוזים לניתוח רגישות |
-| `40_stochastic-analysis-input` | (לא בשימוש בקוד מאז 4.10.2026) גבולות לשינוי אקראי |
+| `20_year-input` | 17 שורות: תחזית ביקוש (`demand-forecast`, רשימה נפתחת), שנת היעד (`predicted year`), הספקי סולארי, רוח, גרעין, פסולת לאנרגיה, מימן (אחסון, ייצור, יבוא, נצילות), אגירה (אנרגיה, נצילות, עומק פריקה), DFS ו-V2G. כל השורות קלט רגיל (שורות 16–17, נצילות ועומק פריקה של אגירה, היו נוסחאות מ-`14_assumptions-yearly` עד 17.10.2026 והפכו לקלט) |
+| `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `hydrogenEfficiency`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes, ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
+| `12_raw-data-hourly` | פרופיל שעתי של שנת ייחוס (8,760 שעות): ביקוש, סולארי, רוח. מקור לקבועי שנת הייחוס |
+| `10_demand-yearly`, `11_must-run-yearly` | תחזיות ביקוש שנתיות לפי תרחיש (2023–2050) וקיבולת must-run לפי שנה |
+| `13_assumptions` | CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |
+| `06_sensitivity-analysis`, `40_stochastic-analysis-input` | (לא בשימוש בקוד מאז 4.10.2026) |
+
+### פלט והתנהגות
+- אחרי Predict Year הגיליון עובר ל-`21_year-summary` (שורה 1: `output results - year <שנה>`, נתונים משורה 3). אחרי Calculate Scenarios and Costs הוא עובר ל-`31_scenarios-yearly`.
+- `25_year-chart-annual`: שורה 24 כותרות, ושורה 25 נוסחאות `INDEX`+`MATCH` ששולפות עמודות מ-`22_year-daily` לפי הכותרת. הגרף דורש טווח רציף, ולכן היא עותק של נתוני 22. `maxgasgen*10` הוא `maxGasGen×10` לקנה מידה.
 
 ### ליבת הסימולציה – `calculateYear` (בקובץ yearly_model.gs)
 1. הביקוש השעתי מוכפל במקדם הגידול לשנת היעד.
@@ -37,17 +51,17 @@
 ### פריטי התפריט (NZO Model)
 | פעולה | מה עושה | פלט |
 |---|---|---|
-| Predict Year | סימולציה לשנה אחת לפי `20_parameters` | `42_hourly-predicted`, `41_daily-predicted`, `40_year-summary`, `90_run-history` |
-| Calculate Costs | מחשבת ומייצאת את טבלת העלויות | `30_costs-forecast` |
-| Calculate Scenarios and Costs (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`21_scenarios-keyframes`, שנה אחר שנה | `50_scenarios-yearly`, `30_costs-forecast` |
-| Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות, ומריצה Calculate Costs | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_costs`, `30_costs-forecast`, `_meta`, `_status` |
+| Predict Year | סימולציה לשנה אחת לפי `20_year-input` | `23_year-hourly`, `22_year-daily`, `21_year-summary`, `29_year-run-history` |
+| Calculate Costs | מחשבת ומייצאת את טבלת ההנחות השנתית ל-14 (רצה אוטומטית ב-Scenarios וב-Sync) | `14_assumptions-yearly` |
+| Calculate Scenarios and Costs (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`30_scenarios-input`, שנה אחר שנה | `31_scenarios-yearly`, `14_assumptions-yearly` |
+| Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות, ומריצה Calculate Costs | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions`, `14_assumptions-yearly`, `_meta`, `_status` |
 | Advanced: Run / Record reference test | בדיקת תרחיש ייחוס מול ערכים שמורים ב-`reference_test_expected.js` | לא כותבות ללשוניות |
 | Advanced: Update data hash / Check data status | רישום גרסת נתונים ו-hash ב-`_meta`, ובדיקה שהנתונים תואמים | `_meta`, `_status` |
 | Advanced: Apply design scheme | צבעי לשוניות, הגנות באזהרה, סדר לשוניות, תיעוד התפריט, טבלת הגליונות והדיאגרמה | `00_documentation` |
 
 > **ה-hash תלוי בשמות הלשוניות:** הוא כולל את שם הלשונית והטווח (`#שם!טווח`). אחרי שינוי שם של לשונית בסיס (10–13) צריך להריץ במאסטר Update data hash ולתייג גרסת נתונים חדשה (למשל `data-1.8`), אחרת Sync בעותקים ייעצר עם "המאסטר אינו תואם ל-hash הרשום".
 
-> **חשוב:** Predict Year **לא** מרענן את `30_costs-forecast`. ערכים ב-`20_parameters` שמגיעים משם (למשל נצילות ועומק פריקה של אגירה) מתעדכנים רק אחרי Calculate Costs או Calculate Scenarios and Costs (בונה את כל ה-Scenarios).
+> **`14_assumptions-yearly`** היא פלט להצגה בלבד (13 מורחבת לכל שנה) ואינה קלט של אף use case: הקוד לא קורא ממנה, ואין נוסחאות שתלויות בה. היא מתעדכנת ב-Calculate Scenarios and Costs, ב-Sync וב-Calculate Costs הידני.
 
 ### הנחות מידול שכדאי לאשר
 - גרעין ומימן מיובא נספרים בתוך `renewableConsumption`.
@@ -64,17 +78,18 @@
 - `sync.js`: `syncFromMaster` (שלב 10א). `data-meta.js`: גרסת נתונים ו-hash (`computeDataHash`, `getDataMeta` מקבלות גיליון אופציונלי). `design-scheme.js`: סכמת עיצוב, סדר לשוניות, תיעוד ב-`00_documentation`. `config.js`: `MASTER_SPREADSHEET_ID`.
 
 ### מינוח (מאוקטובר 2026)
-- **Scenario** = מודל שלם (כמה שנות מפתח). **YearState** (בעבר `Scenario`) = מצב של שנה אחת. **keyframes** = שורות ב-`21_scenarios-keyframes`.
+- **Scenario** = מודל שלם (כמה שנות מפתח). **YearState** (בעבר `Scenario`) = מצב של שנה אחת. **keyframes** = שורות ב-`30_scenarios-input`.
 - מזהים עיקריים בקוד: `chooseScenario`, `readScenariosFromKeyframes`, `groupYearsIntoScenarios`, `saveScenario`, `class YearState`, `Scenario.years`, `generateYearStates`, `saveYearStatesOutput`, `YEAR_STATE_HEADERS`, `KEYFRAME_HEADERS`.
 - שמות הלשוניות בקוד מוגדרים בקבועי `SHEET_*` (18 קבועים); אין עוד שמות לשוניות כמחרוזות בקוד.
-- `saveCosts` כותבת את טבלת ההנחות המורחבת מ-`13_costs` אל `30_costs-forecast` (לא עלויות Scenario).
+- `saveCosts` כותבת את טבלת ההנחות המורחבת מ-`13_assumptions` אל `14_assumptions-yearly` (לא עלויות Scenario).
 - שמות עמודות: שדות השעה אוחדו (`…Generation`, `hydrogenImported`, `solarToV2g`). נשארו: `Cummulative` (typo, נשאר בכוונה: פיבוטים וגרף תלויים בו), כותרות קלט (`Product`/`Parameter`/`Base Price`/`val_base`), `maxFossilCapacity`.
 
 ## 2. מצב נוכחי
+- **בעיה ידועה (Sync):** אין התאמות מקומיות לנתוני בסיס. עריכה ידנית בלשוניות `10`–`13` בעותק נדרסת בסנכרון הבא. חלון האישור של Sync מציג כמה תאים ישתנו, ומזהיר אם נתוני הבסיס בעותק נערכו ידנית. לשינוי קבוע: משנים בגיט ובמאסטר. מנגנון התאמות מקומיות (שלב 10ב) נדחה.
 - **4.10.2026 ו-10.10.2026:** הוסרו מהקוד הניתוחים sensitivity ו-stochastic וכל שרידיהם (הקובץ `stochastic analysis.gs` נמחק). הפרויקט: 11 קבצים, 3,102 שורות. הקוד ב-`NZO_removed_code.md`. בדיקת עשן אחרי הניקיון: Predict Year ו-Calculate Scenarios and Costs עברו ללא שגיאות.
 - כל 7 הבאגים שנמצאו תוקנו ונשמרו, והיסטוריית השינויים המלאה נמצאת ב-`NZO_archive.md` (לא בפרויקט).
-- לא נבדק על הגיליון: הגבלת הזמן בניתוח הסטוכסטי, שאלה יחידה ב-sensitivity, חידוש סריקת scenarios, וכתיבת שורת כותרות ב-`90_run-history`.
-- פתוח: שאלות המודל שבסעיף "הנחות מידול שכדאי לאשר", איחוד פורמט ב-`40_year-summary`, ושתי שורות לא בשימוש ב-`40_stochastic-analysis-input`.
+- לא נבדק על הגיליון: הגבלת הזמן בניתוח הסטוכסטי, שאלה יחידה ב-sensitivity, חידוש סריקת scenarios, וכתיבת שורת כותרות ב-`29_year-run-history`.
+- פתוח: שאלות המודל שבסעיף "הנחות מידול שכדאי לאשר", איחוד פורמט ב-`21_year-summary`, ושתי שורות לא בשימוש ב-`40_stochastic-analysis-input`.
 - פתוח בגליון: `312!B77:B79` מצביעים על 2024/2034/2044 במקום 2020/2030/2040; `310!A111` (FILTER) מחזיר #REF! (קיים מראש). `312!B80` תוקן ל-`='10_demand-yearly'!H47`.
 - LB/UB בניתוח הסטוכסטי: "LB" בגיליון הוא העלייה המרבית ו-"UB" הירידה המרבית (r בין `1 - UB` ל-`1 + LB`).
-- `40_year-summary`: שורה 1 "output results", שורה 2 ריקה, והנתונים מתחילים בשורה 3.
+- `21_year-summary`: שורה 1 כותרת עם השנה, שורה 2 ריקה, והנתונים מתחילים בשורה 3.

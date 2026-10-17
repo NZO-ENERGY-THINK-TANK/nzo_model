@@ -1,7 +1,7 @@
-const SHEET_HOURLY_PREDICTED = '42_hourly-predicted';
-const SHEET_DAILY_PREDICTED = '41_daily-predicted';
-const SHEET_SUMMARY = '40_year-summary';
-const SHEET_COSTS_OUTPUT = '30_costs-forecast'
+const SHEET_HOURLY_PREDICTED = '23_year-hourly';
+const SHEET_DAILY_PREDICTED = '22_year-daily';
+const SHEET_SUMMARY = '21_year-summary';
+const SHEET_COSTS_OUTPUT = '14_assumptions-yearly'
 
 var HOURLY_PREDICTED_HEADERS = ['date', 'hourOfDay', 'hourOfYear', 'demand','nuclearGeneration','wasteToEnergyGeneration', 'hydrogenUsage','hydrogenCharge','windGeneration', 'storageUsage','v2gUsage', 'mustRun', 'gasUsage', 'solarUsage', 'windUsage','storageSolarCharge', 'storageGasCharge', 'storageDischarge','v2gDischarge', 'curtailedEnergy', 'storageStateEnd', 'netDemand', 'missingEnergy','dfsUsed','hydrogenImported','solarToV2g'];
 
@@ -732,7 +732,7 @@ function saveSummary(summary, parameters) {
   for (var v in summary) {
     rows.push([v, summary[v].units, summary[v].value]);
   }
-  rows.push(['','','']);
+  rows.push(['run details','','']);
   rows.push(['last calculation time', '', Date()]);
 
   
@@ -742,4 +742,14 @@ function saveSummary(summary, parameters) {
   }
   var outputSheet = getOrCreateSheet(SHEET_SUMMARY);
   outputSheet.getRange(3, 1, rows.length, 3).setValues(rows);
+  rows.forEach(function(r, i) {
+    if (r[0] === 'run details' || r[0] === 'Last Calculation Parameter Values') outputSheet.getRange(3 + i, 1, 1, 3).setFontWeight('bold');
+  });
+  // Remove leftovers of earlier, longer runs (the parameter list shrinks when parameters are removed).
+  var firstStaleRow = 3 + rows.length;
+  var staleRows = outputSheet.getMaxRows() - firstStaleRow + 1;
+  if (staleRows > 0) outputSheet.getRange(firstStaleRow, 1, staleRows, 3).clearContent();
+  // Title row (row 1) with the simulated year. Rows from 3 down are read by the run history, so row 1 is free.
+  outputSheet.getRange(1, 1).setValue('output results - year ' + parameters.currentYear).setFontWeight('bold');
+  outputSheet.getRange(2, 1, 1, 3).setValues([['name', 'units', 'value']]).setFontWeight('bold').setBackground('#eeeeee');
 }

@@ -28,6 +28,27 @@
 
 > הערה: רשומות מלפני 2 באוקטובר 2026 (אחה"צ) משתמשות בשמות הישנים (`choosScenario`, `allScenarios`, `3_scenarios-input` וכד'). המיפוי לשמות החדשים נמצא בסעיף "איחוד מינוח" למטה.
 
+### 17 באוקטובר 2026 – הפרדת שני ה-use cases וקידוד לשוניות
+
+**בוצע (באישור David, צעד אחר צעד; אומת ב-Run reference test = PASS אחרי כל שלב):**
+- שלב 1: קבועי שנת הייחוס (`solarKwToKwhYearly`, `windKwToKwhYearly`, הספקי שנת הייחוס וסך הביקוש) מחושבים מ-`12_raw-data-hourly` (`referenceYearParameters` ב-`data-input.js`). שעות אפקטיביות: סולארי 1,700, רוח 2,930 (`config.js`).
+- שלב 2: טבלת הגדרות לכל Scenario בראש `30_scenarios-input` (`scenario-settings.js`): תחזית ביקוש, ריבית, נצילות מימן. ה-keyframes מתחילים בשורה 25. `Scenario.settings`; `Set up scenario settings` בתפריט.
+- שלב 3: גורמי פליטה של CCGT הועברו ל-`13_assumptions` (שורות `ccgt-emissions`). הלשונית `13_costs` שונתה ל-`13_assumptions`, `costs.js` ל-`assumptions.js`, ועמודות `pct_change_*` ל-`change_*` (פורמט אחוזים).
+- שלב 4: ניקוי `20_parameters`: נשארו 17 שורות. הוסרו שורות שהועברו להגדרות התרחיש או לקבועים. רשימות נפתחות לתחזית ביקוש ולשנה (`_applyParameterDropdowns`).
+- שלב 5: שינוי שמות לשוניות לפי use case: `20_parameters`→`20_year-input`, `40_year-summary`→`21_year-summary`, `41_daily-predicted`→`22_year-daily`, `42_hourly-predicted`→`23_year-hourly`, `421_daily-chart`→`24_year-chart-day`, `61_yearly-chart`→`25_year-chart-annual`, `90_run-history`→`29_year-run-history`, `21_scenarios-keyframes`→`30_scenarios-input`, `50_scenarios-yearly`→`31_scenarios-yearly`, `30_costs-forecast`→`14_assumptions-yearly`.
+- `25_year-chart-annual`: תוקנו כותרות `nuclearGeneration` ו-`wasteToEnergyGeneration` (היו `#N/A`), הוחלף `OFFSET` ב-`INDEX`, נוקו עמודות M ו-O.
+- `21_year-summary`: שורת כותרת עם השנה (A1). Predict Year עובר ל-`21_year-summary` בסיום, ו-Calculate Scenarios and Costs ל-`31_scenarios-yearly`.
+- שלב 6: `00_documentation` נכתבת עכשיו לפי use case (תוכן עניינים, מדריך הרצה, תיעוד תפריט) ובפריסה דינמית: כל בלוק מונח אחרי הקודם, ושורת הקישור לתחזית נוגה נשמרת. עודכנו `NZO_core.md`, `README`, `NZO_collaboration_design.md` ודיאגרמת התלויות.
+
+- `20_year-input` שורות 16–17 (נצילות ועומק פריקה של אגירה) הפכו מנוסחאות מ-`14_assumptions-yearly` לקלט רגיל (ברירת מחדל 0.93 ו-0.9), בהתאם ל-use case 2 שבו הם עמודות ב-keyframes. `14_assumptions-yearly` היא עכשיו פלט להצגה בלבד, ללא תלות של use case כלשהו. סכמת העיצוב מאפסת את הצבע והרקע האפורים של C16:C17 (`DESIGN_FORMER_CALCULATED_CELLS`).
+- `21_year-summary`: שורת כותרות `name | units | value` (שורה 2), כותרת ביניים `run details` (שורה 32), וניקוי שארית של הרצות קודמות מתחת לרשימת הפרמטרים (`saveSummary`).
+- דיאגרמת התלויות פוצלה לשתיים, אחת לכל use case: `docs/dependency-diagram-use-case-1/2.svg/.png`, ובקוד `dependency-diagram-data.js` (שתי תמונות) ו-`_writeDependencyDiagram` (כותרת ותמונה לכל use case). הגנרטור `dependency-diagram.make.py` מייצר את הכול (נדרש ImageMagick `convert`).
+
+**מעקב והערות:**
+- ב-hash נכללות רק לשוניות 10–13 (שמותיהן לא השתנו, למעט `13_costs`→`13_assumptions` בשלב 3 עם גרסת נתונים חדשה).
+- בעותקים של חוקרים: לשנות את שמות הלשוניות ידנית (Sync לא עושה זאת) ולהריץ Set up scenario settings.
+- פתוח: פרופיל הרוח של 2023 מעוות (Genesis Wind, 207 MW חובר באמצע השנה); `CODE_VERSION` (מומלץ 2.0.0 בשחרור); שינוי שם `getCostsDb`/`saveCosts`/"Calculate Costs" לא אושר.
+
 ### 4 באוקטובר 2026 – ניקיון ראשוני: הסרת קוד מת (הניתוחים sensitivity ו-stochastic)
 
 **בוצע (באישור David, נשמר ב-Drive ואומת אחרי טעינה מחדש):**
@@ -360,3 +381,22 @@
 ## 2026-10-13 — docs: hash depends on tab names; core menu table refreshed
 - Found while testing Sync: renaming base tabs changes `data_hash` (the hash text contains `#sheet!range`), so the master's data-1.7 hash no longer matched and Sync correctly stopped. Fix: Update data hash in the master with a new version (data-1.8) and tag it.
 - `NZO_collaboration_design.md` (section 7) and `NZO_core.md`: rule added. `NZO_core.md`: menu table now lists Sync from master and the Advanced items; removed Enumerate/Summarize/save Scenario rows and the `scenarios-enumeration.gs` entry (code removed earlier); file list mentions sync.js, data-meta.js, design-scheme.js, config.js.
+
+## 2026-10-13 — Step 10b-1: local overrides (sheet, menu, hash)
+- New `src/overrides.js`, tab `22_local-overrides` (renamed from the design doc's `07_local-overrides` to fit the prefix scheme; role input, created by `applyDesignScheme` via `ensureOverridesSheet`). Columns: tab, cell, header, base_value, local_value, note, created, status. `cell` = A1 (one row per cell) or `*` for a whole local tab.
+- Menu `Local overrides`: `Register selected cells as override` (the researcher edits cells in a base tab first, then selects them; only cells that differ from the master are registered, within the DATA_HASH_RANGES ranges, max 500 cells, reason required; the master value is read via `openById`; the cell gets a yellow background and a note), `Mark current tab as local`, `Cancel override` (writes the master value back and deletes the rows, or removes a tab mark). Not available in the master itself.
+- `data-meta.js`: `computeDataHash(spreadsheet?, reverts?)` can replace given cells before hashing; new `computeLiveHashState()` = hash with override cells replaced by `base_value`, plus `partialTabs` (whole local tabs, cannot be compared) and the cell count. `_writeStatus(state)` now takes that state; `_status` shows `data_hash_match` (true/false, or `n/a (local tab: ...)`, yellow) and a new row `local_overrides`. `getRunMetadata` and `checkDataStatus` use the same state.
+- `applyDesignScheme` re-applies the override look (`applyOverrideMarks`) and creates the tab; tab order, tab list and menu docs updated; run guide moved to row 13.
+- Guard in `syncFromMaster`: stops when overrides exist (Sync does not respect them until step 10b-2).
+- Verified offline with a stubbed Node test: changing a cell changes the hash, and replacing it by base_value restores the master hash. Not yet tested in the sheet.
+
+## 2026-10-17 — Step 10a verified in Worker1; docs top area cleanup
+- Sync from master tested end to end in the copy `NZO MODEL – Worker1`: master changed (`13_costs!E2` = `sync-test`, Update data hash → `data-1.9`), Sync showed `data-1.8 → data-1.9`, copied, `_status` = data-1.9, `data_hash_match` TRUE, `last_sync` 2026-10-17T08:58, 30_costs-forecast recalculated, `13_costs!E2` copied. Duration about 2 minutes (limit is 6). The path "master hash does not match `_meta`" was verified earlier (renamed tabs).
+- Cleanup of the test: clear `13_costs!E2` in the master and run Update data hash with `data-1.10`, then Sync in Worker1.
+- `src/design-scheme.js`: `_migrateLegendLayout()` replaced by `_clearDocsTopArea()`: rows 1..end of run guide (A:C) of 00_documentation are always cleared before writing (fixes the duplicate "ארבעה שלבים להרצה" row left from the earlier anchor move).
+
+## 2026-10-17 — Step 10b deferred (known issue); Sync shows what will change
+- Decision: local overrides of base data (step 10b) are deferred. Known issue: manual edits in tabs 10-13 of a researcher copy are overwritten by Sync. Documented in `NZO_core.md` (section 2) and `NZO_collaboration_design.md` (step 10, item 5 marked deferred).
+- Removed the unpushed 10b-1 code: `src/overrides.js` deleted; `data-meta.js` back to `computeDataHash(spreadsheet?)` and `_writeStatus(liveHash)` (no `computeLiveHashState`, no reverts); `sync.js` guard removed; `main.js` submenu `Local overrides` removed; `design-scheme.js`: `22_local-overrides` removed from scheme, tab order, tab list and menu docs, run guide anchor back to row 12. Backup of all of it is in `NZO_removed_code.md`.
+- `src/sync.js`: new `_syncCountDifferences(master, local)`. The confirmation dialog now lists, per tab, how many cells change, the first 5 changed cells (A1), and a WARNING when the local hash differs from the local recorded hash (base data edited by hand since the last sync).
+- Syntax check passed on all `src/*.js`. Not yet tested in the sheet: push, then run Sync in Worker1 (with and without a hand edit in `13_costs`).

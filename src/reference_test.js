@@ -13,7 +13,7 @@ const REFERENCE_SCENARIO_NAME = 'Base';
 const REFERENCE_TOLERANCE = 1e-6; // relative
 const REFERENCE_YEARS = [2030, 2040, 2050]; // years whose details are compared
 
-// Keyframes of the "Base" scenario, copied from 21_scenarios-keyframes (2026-10-10).
+// Keyframes of the "Base" scenario, copied from 30_scenarios-input (2026-10-10).
 // Column order = KEYFRAME_HEADERS. Kept in code so edits in the sheet do not change the reference.
 const REFERENCE_KEYFRAMES = [
   ['Base', 2026, 8000, 500, 6000, 0.9083333333333333, 0.81, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
@@ -31,7 +31,7 @@ const REFERENCE_OVERRIDDEN_PARAMETERS = [
   'effectiveStorageEnergy', 'minStorageEnergy', 'v2gEnergy', 'nuclearCapacity',
   'wasteToEnergyCapacity', 'hydrogenProductionCapacity', 'hydrogenImportCapacity',
   'hydrogenStorage', 'dfsHoursPerYear', 'dfsReductionPerHour', 'totalEnergyDemandYearly',
-  'futureDemandFactor', 'mustRun'
+  'futureDemandFactor', 'mustRun', 'interestRate', 'hydrogenEfficenty'
 ];
 
 /** Builds the reference scenario from the embedded keyframes (same logic as readScenariosFromKeyframes). */
@@ -44,7 +44,9 @@ function _buildReferenceScenario() {
     years.push(current);
     last = current;
   });
-  return new Scenario(years);
+  var scenario = new Scenario(years);
+  scenario.settings = REFERENCE_SCENARIO_SETTINGS;
+  return scenario;
 }
 
 /** Runs the reference scenario and returns {inputs, results}. Writes nothing to the sheet. */
@@ -143,7 +145,7 @@ function runReferenceTest() {
     if (inputDiffs.length) text += '\n\nNote: parameter inputs differ from the recorded ones:\n' + inputDiffs.join('\n');
   } else if (inputDiffs.length) {
     status = 'INPUT CHANGED';
-    text = 'Parameters in 20_parameters differ from the recorded ones, so the comparison is not valid:\n' +
+    text = 'Parameters in 20_year-input differ from the recorded ones, so the comparison is not valid:\n' +
       inputDiffs.join('\n') + '\n\nResult differences:\n' + resultDiffs.join('\n');
   } else {
     status = 'FAIL';

@@ -4,12 +4,12 @@
 
 | קובץ | מקור בגליון | תוכן |
 |---|---|---|
-| `costs.csv` | `13_costs` עמודות A–N, שורה 1 = כותרת, שורות 2–56 (כל הלשונית נטענת מה-CSV) | הנחות עלות: מוצר, פרמטר, מקור, יחידות, הערות, שיטת שינוי, מחיר בסיס, ושינוי באחוזים לכל שנה 2022–2050 |
+| `costs.csv` | `13_assumptions` עמודות A–N, שורה 1 = כותרת, שורות 2–60 (כל הלשונית נטענת מה-CSV) | הנחות עלות: מוצר, פרמטר, מקור, יחידות, הערות, שיטת שינוי, מחיר בסיס, ושינוי באחוזים לכל שנה 2022–2050 |
 | `yearly_demand.csv` | `10_demand-yearly` כולה (A1:C29, טעינה מלאה), מקור: תחזית נוגה | תחזית ביקוש שנתית 2023–2050 (נוגה 2023) |
 | `must_run_yearly.csv` | טבלה חדשה, לשונית `11_must-run-yearly` (טעינה מלאה); הערכים נלקחו מ-`03_future-yearly-demand!G` (`SUM(C:F)`) | קיבולת must run שנתית (MW), 2023–2050 |
 | `hourly_demand23.csv` | `12_raw-data-hourly` כולה (A1:N8761, טעינה מלאה), מקור: דו"ח מצב משק החשמל | פרופיל שעתי של שנת ייחוס 2023 (8,760 שעות) |
 
-שלושת הקבצים יוצאו: `yearly_demand.csv`, `hourly_demand23.csv`, `costs.csv`. `20_parameters` הוא קלט ספציפי להרצה (לא הנחות בסיס), ולכן נשאר בגיליון ולא ב-git. `20_scenarios-input` לא יוצאה. פרטי העמודות, היחידות והמקורות בסעיפים למטה.
+שלושת הקבצים יוצאו: `yearly_demand.csv`, `hourly_demand23.csv`, `costs.csv`. `20_year-input` הוא קלט ספציפי להרצה (לא הנחות בסיס), ולכן נשאר בגיליון ולא ב-git. `20_scenarios-input` לא יוצאה. פרטי העמודות, היחידות והמקורות בסעיפים למטה.
 
 כל שינוי בקבצים אלה הוא Pull Request עם אישור של שני מאשרים.
 
@@ -50,26 +50,26 @@
 | `other_renewables_mw` | Q | אחר מתחדשות |
 | `other_mw` | R | אחר |
 
-הגיליון `12_raw-data-hourly` נטען כעת כולו מהקובץ (14 עמודות, כותרת בשורה 1, A1 = `day`), והעמודות הישנות A, E, I, J לא קיימות בו. הקוד (`_readRefYearHoursData`) קורא רק את המבנה הזה. נוסחאות ב-`20_parameters` (C4, C5, C7) מפנות לעמודות H, L, F.
+הגיליון `12_raw-data-hourly` נטען כעת כולו מהקובץ (14 עמודות, כותרת בשורה 1, A1 = `day`), והעמודות הישנות A, E, I, J לא קיימות בו. הקוד (`_readRefYearHoursData`) קורא רק את המבנה הזה. נוסחאות ב-`20_year-input` (C4, C5, C7) מפנות לעמודות H, L, F.
 
 לא יוצאו: `Date String` (A, ריקה ברובה), `Date` (E, כפולה לתאריך), "אורות רבין" ו"רוטנברג" (I, J, ריקות לגמרי). 
 
 ## costs.csv
 
-מקור: לשונית `13_costs` (הערכות ומחקרים, בהם Bloomberg, לפי `00_documentation`). עמודות A–N (כותרת + 55 שורות אחרי הסרת שורות מחושבות ויחסי ה-PV). ערכים בלבד, בדיוק מלא (השבר: 0.06 = 6%).
+מקור: לשונית `13_assumptions` (הערכות ומחקרים, בהם Bloomberg, לפי `00_documentation`). עמודות A–N (כותרת + 55 שורות אחרי הסרת שורות מחושבות ויחסי ה-PV). ערכים בלבד, בדיוק מלא (השבר: 0.06 = 6%).
 
 | עמודה | עמודה בגיליון המקורי | הסבר |
 |---|---|---|
 | `product`, `parameter`, `source`, `units`, `comments` | A–E | מזהה השורה ותיאורה |
 | `increase` | F | שיטת ההרחבה בין השנים: `linear`, `yoy`, `none` |
 | `base_price` | G | מחיר/ערך בסיס |
-| `pct_change_2022`, `pct_change_2025`, `pct_change_2030`, `pct_change_2035`, `pct_change_2040`, `pct_change_2045`, `pct_change_2050` | H–N | שינוי יחסי לעומת `base_price` בכל שנה (שבר, -0.162 = ירידה של 16.2%). משמש `increase` ל-`linear`/`yoy` |
+| `change_2022`, `change_2025`, `change_2030`, `change_2035`, `change_2040`, `change_2045`, `change_2050` | H–N | שינוי יחסי לעומת `base_price` בכל שנה (שבר, -0.162 = ירידה של 16.2%). משמש `increase` ל-`linear`/`yoy` |
 
 הערות:
 - G13, G26, G35 היו נוסחאות (`=G7`, `=125*C75`, `=C78`) והוחלפו בערכים.
-- לא יוצאו עמודות O–U (ערכי התחזית המחושבים: `base_price × (1 + pct_change)`). הנוסחאות נשארות בגיליון.
-- שורות `share-of-deployment` (יחס ההתקנה בין סוגי ה-PV) הוסרו מהקובץ: היחסים הם קלט של ה-scenario (`21_scenarios-keyframes`, עמודות `pvShare*`), לא נתון עלות.
+- לא יוצאו עמודות O–U (ערכי התחזית המחושבים: `base_price × (1 + change)`). הנוסחאות נשארות בגיליון.
+- שורות `share-of-deployment` (יחס ההתקנה בין סוגי ה-PV) הוסרו מהקובץ: היחסים הם קלט של ה-scenario (`30_scenarios-input`, עמודות `pvShare*`), לא נתון עלות.
 - הוסרו שורות מחושבות: `PV-Average` (שורות 19–22 בגיליון: share, capex, opex, lifetime) ו-`emissions combined` (שורה 41, לא נקראת בקוד).
 - `pv-average` (capex, opex, lifetime) מחושב בקוד (`YearState.pvAverage`): ממוצע משוקלל של ארבעת סוגי ה-PV לפי היחסים של ה-scenario בכל שנה.
 
-הערות ל-`costs.csv`: הקוד מחשב `base_price × (1+pct)` בעצמו (אין עמודות מחושבות בגיליון). בכל טעינה, `13_costs` מוחלפת כולה ("Replace current sheet") והכותרת בשורה 1. כלל PV-Dual-Use: capex = capex של dual-use + capex של pv-commercial (מחושב ב-`pvAverage`).
+הערות ל-`costs.csv`: הקוד מחשב `base_price × (1+pct)` בעצמו (אין עמודות מחושבות בגיליון). בכל טעינה, `13_assumptions` מוחלפת כולה ("Replace current sheet") והכותרת בשורה 1. כלל PV-Dual-Use: capex = capex של dual-use + capex של pv-commercial (מחושב ב-`pvAverage`).
