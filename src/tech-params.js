@@ -1,6 +1,11 @@
 const SHEET_TECH_PARAMS = '13_tech-params'
 // Header row of 13_tech-params = header row of data/tech-params.csv (sheet row 1). Values per year are computed in code.
+// param_set: the parameter set a row belongs to. DEFAULT_PARAM_SET holds every row; any other set holds only the rows
+// that differ from it, and a row missing from a set is taken from DEFAULT_PARAM_SET. Every row must have a param_set
+// (an empty first column ends the table).
+const DEFAULT_PARAM_SET = 'NZO';
 var FORECASTED_PARAM_HEADERS = [
+  'param_set',
   'product',
   'parameter',
   'source',
@@ -17,58 +22,81 @@ var FORECASTED_PARAM_HEADERS = [
   'change_2050'
 ]
 
-var FORECASTED_PARAM_OUTPUT_HEADERS = ['product', 'parameter', 'source', 'units'].concat(interpolate([2022, 2050]));
+var FORECASTED_PARAM_OUTPUT_HEADERS = ['param_set', 'product', 'parameter', 'source', 'units'].concat(interpolate([2022, 2050]));
 
 /**
- * In-memory database for financial assumptions.
- * Optimizes performance by indexing a flat list into a structured lookup table (O(1) access).
- * * @class
+ * In-memory database of the technology parameters, by parameter set.
+ * Structure: sets[paramSet][product][parameter] -> ForecastedParam.
+ * A CostsDb object reads one set (this.paramSet, DEFAULT_PARAM_SET unless forSet() was called);
+ * a (product, parameter) missing from that set is read from DEFAULT_PARAM_SET.
+ * @class
  */
 class CostsDb {
 
-  /**
-   * Initializes the database and builds the index.
-   * Structure: db[Product][Parameter] -> FinancialParameter Object
-   * * @param {Array<Object>} costs - List of FinancialParameter objects.
-   */
+  /** @param {Array<ForecastedParam>} costs - all rows of 13_tech-params. */
   constructor(costs){
     this.list = costs
-    this.db = {}
+    this.sets = {}
+    this.paramSet = DEFAULT_PARAM_SET
 
-    // Indexing Logic: Convert linear array to nested map for fast retrieval
-    costs.forEach(fp => { 
-      if (!(this.db.hasOwnProperty(fp.product))) {
-        this.db[fp.product] = {};
+    costs.forEach(fp => {
+      if (!this.sets.hasOwnProperty(fp.paramSet)) this.sets[fp.paramSet] = {};
+      var set = this.sets[fp.paramSet];
+      if (!set.hasOwnProperty(fp.product)) set[fp.product] = {};
+      if (set[fp.product].hasOwnProperty(fp.parameter)) {
+        throw new Error(SHEET_TECH_PARAMS + ': duplicate row ' + fp.paramSet + ' / ' + fp.product + ' / ' + fp.parameter);
       }
-      this.db[fp.product][fp.parameter] = fp;
+      set[fp.product][fp.parameter] = fp;
     });
+    if (!this.sets.hasOwnProperty(DEFAULT_PARAM_SET)) {
+      throw new Error(SHEET_TECH_PARAMS + ": no rows with param_set '" + DEFAULT_PARAM_SET + "' (the default set, which must hold every row)");
+    }
+  }
+
+  /** Names of the parameter sets, default first. */
+  setNames() {
+    return [DEFAULT_PARAM_SET].concat(Object.keys(this.sets).filter(n => n !== DEFAULT_PARAM_SET));
+  }
+
+  /** A view of this database that reads the given set (empty = default). Throws on an unknown set. */
+  forSet(name) {
+    if (name === '' || name === undefined || name === null) name = DEFAULT_PARAM_SET;
+    if (!this.sets.hasOwnProperty(name)) {
+      throw new Error("Unknown param_set '" + name + "'. Sets in " + SHEET_TECH_PARAMS + ': ' + this.setNames().join(', '));
+    }
+    var view = Object.create(CostsDb.prototype);
+    view.list = this.list;
+    view.sets = this.sets;
+    view.paramSet = name;
+    return view;
   }
 
   /**
-   * Retrieves a specific cost value for a given year.
-   * Implements 'Fail Fast' logic: throws an error immediately if the data is missing
-   * to prevent silent calculation errors downstream.
+   * Value of a parameter for a given year, from this.paramSet, else from DEFAULT_PARAM_SET.
+   * Fail fast: throws if the parameter is missing from both.
    */
   get(product, parameter, year) {
-    if (!(product in this.db)) {
+    var own = this.sets[this.paramSet];
+    if (own[product] && own[product][parameter]) return own[product][parameter].valuesByYear[year];
+    var base = this.sets[DEFAULT_PARAM_SET];
+    if (!(product in base)) {
       throw "Missing product from CostsDb: " + product;
     }
-    if (!(parameter in this.db[product])) {
-      throw "Missing parameter from CostsDb: " + parameter;
+    if (!(parameter in base[product])) {
+      throw "Missing parameter from CostsDb: " + product + " / " + parameter;
     }
-    return this.db[product][parameter].valuesByYear[year];
+    return base[product][parameter].valuesByYear[year];
   }
-  
+
   // --- SERIALIZATION HELPERS ---
-  // Helper methods to format data for writing back to the Google Sheet.
   getHeaders(){
     return this.list[0].headers;
   }
-  
+
   toTable() {
     return this.list.map(fp =>fp.toRow());
   }
-  
+
 };
 
 
@@ -83,10 +111,11 @@ class ForecastedParam {
    * Initializes the parameter and calculates values for all years.
    * * @param {Array} row - Raw data row from the spreadsheet. 
    * Note: The 'row' array is consumed (shifted) during initialization.
-   * Row layout = data/tech-params.csv: 6 descriptor columns, base_price, and 7 change columns (2022..2050).
+   * Row layout = data/tech-params.csv: param_set, 6 descriptor columns, base_price, and 7 change columns (2022..2050).
    */
   constructor(row){
     // Extraction: Remove metadata from the start of the row
+    this.paramSet = String(row.shift()).trim()
     this.product = row.shift().toLowerCase()
     this.parameter = row.shift().toLowerCase()
     this.source = row.shift().toLowerCase()
@@ -129,7 +158,7 @@ class ForecastedParam {
   }
 
   toRow() {
-    return [this.product, this.parameter, this.source, this.units].concat(this.values.map(function(x) { return x[1]; }));
+    return [this.paramSet, this.product, this.parameter, this.source, this.units].concat(this.values.map(function(x) { return x[1]; }));
   };
 }
 

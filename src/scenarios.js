@@ -102,6 +102,8 @@ class Scenario{
     }
     // The discount rate is a per-scenario setting (30_scenarios-input), not a global parameter.
     parameters = Object.assign({}, parameters, {interestRate: this.settings.interestRate});
+    // The parameter set (13_tech-params param_set) is a per-scenario setting too.
+    costsDb = costsDb.forSet(this.settings.paramSet);
     // Temporary arrays to hold the cash flow for each category over the years
     var byYear = {
       solarCost: [],

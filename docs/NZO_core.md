@@ -27,10 +27,10 @@
 | לשונית | תוכן |
 |---|---|
 | `20_year-input` | 17 שורות: תחזית ביקוש (`demand-forecast`, רשימה נפתחת), שנת היעד (`predicted year`), הספקי סולארי, רוח, גרעין, פסולת לאנרגיה, מימן (אחסון, ייצור, יבוא, נצילות), אגירה (אנרגיה, נצילות, עומק פריקה), DFS ו-V2G. כל השורות קלט רגיל (שורות 16–17, נצילות ועומק פריקה של אגירה, היו נוסחאות מ-`14_assumptions-yearly` עד 17.10.2026 והפכו לקלט) |
-| `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `hydrogenEfficiency`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes, ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
+| `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `hydrogenEfficiency`, `paramSet`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes, ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
 | `12_raw-data-hourly` | פרופיל שעתי של שנת ייחוס (8,760 שעות): ביקוש, סולארי, רוח. מקור לקבועי שנת הייחוס |
 | `10_demand-yearly`, `11_must-run-yearly` | תחזיות ביקוש שנתיות לפי תרחיש (2023–2050) וקיבולת must-run לפי שנה |
-| `13_tech-params` | CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |
+| `13_tech-params` | עמודה A `param_set`: סט הפרמטרים של השורה. הסט `NZO` (ברירת המחדל) מכיל את כל השורות; סט אחר (למשל של רשות החשמל) מכיל רק את השורות השונות, ושורה חסרה נלקחת מ-`NZO`. כל Scenario בוחר סט בעמודה `paramSet` בטבלת ההגדרות. CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |
 | `06_sensitivity-analysis`, `40_stochastic-analysis-input` | (לא בשימוש בקוד מאז 4.10.2026) |
 
 ### פלט והתנהגות
@@ -80,7 +80,7 @@
 - **Scenario** = מודל שלם (כמה שנות מפתח). **YearState** (בעבר `Scenario`) = מצב של שנה אחת. **keyframes** = שורות ב-`30_scenarios-input`.
 - מזהים עיקריים בקוד: `chooseScenario`, `readScenariosFromKeyframes`, `groupYearsIntoScenarios`, `saveScenario`, `class YearState`, `Scenario.years`, `generateYearStates`, `saveYearStatesOutput`, `YEAR_STATE_HEADERS`, `KEYFRAME_HEADERS`.
 - שמות הלשוניות בקוד מוגדרים בקבועי `SHEET_*` (18 קבועים); אין עוד שמות לשוניות כמחרוזות בקוד.
-- `getCostsDb` (ב-`tech-params.js`) בונה בזיכרון את טבלת ההנחות המורחבת מ-`13_tech-params` (מחיר בסיס כפול 1+`change_YYYY` לכל שנה). `saveCosts` והלשונית `14` הוסרו.
+- `getCostsDb` (ב-`tech-params.js`) בונה בזיכרון את טבלת ההנחות המורחבת מ-`13_tech-params` (מחיר בסיס כפול 1+`change_YYYY` לכל שנה), לפי `param_set`. `CostsDb.forSet(name)` מחזיר תצוגה של סט אחד עם נפילה ל-`NZO`; `Scenario.calculateCosts` משתמש בסט של התרחיש, והסט נרשם בעמודה `paramSet` (האחרונה) ב-`31_scenarios-yearly`. Predict Year לא מחשב עלויות ולכן לא בוחר סט. `saveCosts` והלשונית `14` הוסרו.
 - שמות עמודות: שדות השעה אוחדו (`…Generation`, `hydrogenImported`, `solarToV2g`). נשארו: `Cummulative` (typo, נשאר בכוונה: פיבוטים וגרף תלויים בו), כותרות קלט (`Product`/`Parameter`/`Base Price`/`val_base`), `maxFossilCapacity`.
 
 ## 2. מצב נוכחי

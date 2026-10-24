@@ -1,60 +1,60 @@
-product,parameter,source,units,comments,increase,base_price,change_2022,change_2025,change_2030,change_2035,change_2040,change_2045,change_2050
-PV-Residential,Capex,,ils/kw,,linear,4000,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
-PV-Residential,Opex,,ils/kw/y,,linear,72.66788986,0,0,-0.27,-0.39,-0.44,-0.49,-0.54
-PV-Residential,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
-PV-Commercial,Capex,,ils/kw,,linear,2800,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
-PV-Commercial,Opex,,ils/kw/y,,linear,52.32153735,0,0,-0.23,-0.33,-0.38,-0.42,-0.46
-PV-Commercial,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
-PV-Utility,Capex,,ils/kw,,linear,1800,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
-PV-Utility,Opex,,ils/kw/y,,linear,39.37098562,0,0,-0.24,-0.37,-0.4,-0.43,-0.46
-PV-Utility,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
-PV-Dual-Use,Capex,,ils/kw,"Construction only, for Roads, Agro,etc...",linear,1250,0,0,0,0,0,0,0
-PV-Dual-Use,Opex,,ils/kw/y,,linear,52.32153735,0,0,-0.19318181818181823,-0.2727272727272727,-0.3352272727272728,-0.3920454545454546,-0.44318181818181823
-PV-Dual-Use,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
-Wind,CAPEX,,ils/kw,,linear,4727,0,-0.06,-0.15,-0.2,-0.24,-0.29,-0.33
-Wind,OPEX,,ils/kw/y,,linear,80.35868372,0,-0.04,-0.1,-0.13,-0.16,-0.19,-0.22
-Wind,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
-Storage,CAPEX,,ils/kwh,,linear,375,0,0,-0.15,-0.27,-0.34,-0.4,-0.47
-Storage,OPEX,,ils/kwh/y,,linear,14.35264013,0,0,0,0,0,0,0
-Storage,Lifetime,,years,,linear,20,0,0,0,0,0,0,0
-Storage,Efficiency,,%,,linear,0.93,0,0,0,0,0,0,0.02
-Storage,Depth of Discharge,,%,,linear,0.9,0,0,0,0,0,0,0.055
-CCGT,CAPEX,,ils/kw,,linear,3779,0,0,0,0,0,0,0
-CCGT,OPEX,,ils/kw/y,,linear,164,0,0,0,0,0,0,0
-CCGT,VAR-OPEX,,ils/kwh/y,,linear,0.0139,0,0,0,0,0,0,0
-CCGT,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
-CCGT,Fuel,,ils/kwh,,linear,0.10284414106939704,0,0,0.11,0.33,1.28,1.28,1.28
-financial,WACC,"Electricity Autority - 30% renewables, nilve alout, average - 3.57% ",%,,linear,0.06,0,0,0,0,0,0,0
-emissions,co2,moep,ils/ton,,yoy,210,0,0,0.021,0.019,0.019,0.016,0.016
-emissions,sox,moep,ils/ton,,yoy,116233,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
-emissions,nox,moep,ils/ton,,yoy,161047,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
-emissions,pmx,moep,ils/ton,,yoy,368884,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
-dfs,dfs-per-kwh,,ils/kwh,,linear,0.2,0,0,0,0,0,0,0
-nuclear,Capex,LARGE,ils/kw,,linear,23545,0,0,0,-0.05,-0.15,-0.25,-0.33
-nuclear,Opex,LARGE,ils/kw/y,,linear,540,0,0,0,0,0,0,0
-nuclear,var-opex,LARGE,ils/kwh/y,,linear,0.009,0,0,0,0,0,0,0
-nuclear,Lifetime,LARGE,years,,linear,60,0,0,0,0,0,0,0
-nuclear,fuel,LARGE,ils/kwh,,linear,0.003,0,0,0,0,0,0,0
-nuclear-SMR,Capex,SMR,ils/kw,,linear,29800,0,0,-0.1,-0.2,-0.3,-0.4,-0.5
-nuclear-SMR,Opex,SMR,ils/kw/y,,linear,420,0,0,0,0,0,0,0
-nuclear-SMR,var-opex,SMR,ils/kwh/y,,linear,0.008,0,0,0,0,0,0,0
-nuclear-SMR,Lifetime,SMR,years,,linear,60,0,0,0,0,0,0,0
-nuclear-SMR,fuel,SMR,ils/kwh,,linear,0.0035,0,0,0,0,0,0,0
-wasteToEnergy,Capex,,ils/kw,,linear,11000,0,0,0,-0.1,-0.15,-0.2,-0.25
-wasteToEnergy,Opex,,ils/kw/y,,linear,1100,0,0,0,-0.1,-0.15,-0.2,-0.25
-wasteToEnergy,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
-v2g,var-opex,,ils/kw,,linear,0.1,0,0,0,0,0,0,0
-hydrogen-production,capex,,ils/kw,,linear,1600,0,0,-0.4,-0.5,-0.6,-0.7,-0.8
-hydrogen-production,opex,,ils/kw/y,,linear,80,0,0,-0.15,-0.25,-0.6,-0.55,-0.65
-hydrogen-production,var-opex,,ils/kw,,linear,0.006060606060606061,0,0,-0.15,-0.25,-0.35,-0.55,-0.65
-hydrogen-production,lifetime,,years,,linear,20,0,0,0,0,0,0,0
-hydrogen,storage,,ils/kw,,linear,0.012121212121212121,0,0,-0.15,-0.3,-0.45,-0.55,-0.6
-hydrogen-reuse,capex,,ils/kw,,linear,800,0,0,0,0,0,0,0
-hydrogen-usage,capex,,ils/kw,,linear,3600,0,0,0,0,0,0,0
-hydrogen-usage,opex,,ils/kw/y,,linear,90,0,0,0,0,0,0,0
-hydrogen-usage,lifetime,,years,,linear,35,0,0,0,0,0,0,0
-hydrogen,fuel,,ils/kwh,,linear,0.8,0,0,-0.05,-0.2,-0.3,-0.4,-0.45
-ccgt-emissions,co2,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,486,0,0,0,0,0,0,0
-ccgt-emissions,nox,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.26,0,0,0,0,0,0,0
-ccgt-emissions,sox,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.02,0,0,0,0,0,0,0
-ccgt-emissions,pmx,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.01,0,0,0,0,0,0,0
+param_set,product,parameter,source,units,comments,increase,base_price,change_2022,change_2025,change_2030,change_2035,change_2040,change_2045,change_2050
+NZO,PV-Residential,Capex,,ils/kw,,linear,4000,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
+NZO,PV-Residential,Opex,,ils/kw/y,,linear,72.66788986,0,0,-0.27,-0.39,-0.44,-0.49,-0.54
+NZO,PV-Residential,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
+NZO,PV-Commercial,Capex,,ils/kw,,linear,2800,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
+NZO,PV-Commercial,Opex,,ils/kw/y,,linear,52.32153735,0,0,-0.23,-0.33,-0.38,-0.42,-0.46
+NZO,PV-Commercial,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
+NZO,PV-Utility,Capex,,ils/kw,,linear,1800,0,0,-0.162,-0.324,-0.39,-0.455,-0.52
+NZO,PV-Utility,Opex,,ils/kw/y,,linear,39.37098562,0,0,-0.24,-0.37,-0.4,-0.43,-0.46
+NZO,PV-Utility,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
+NZO,PV-Dual-Use,Capex,,ils/kw,"Construction only, for Roads, Agro,etc...",linear,1250,0,0,0,0,0,0,0
+NZO,PV-Dual-Use,Opex,,ils/kw/y,,linear,52.32153735,0,0,-0.19318181818181823,-0.2727272727272727,-0.3352272727272728,-0.3920454545454546,-0.44318181818181823
+NZO,PV-Dual-Use,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
+NZO,Wind,CAPEX,,ils/kw,,linear,4727,0,-0.06,-0.15,-0.2,-0.24,-0.29,-0.33
+NZO,Wind,OPEX,,ils/kw/y,,linear,80.35868372,0,-0.04,-0.1,-0.13,-0.16,-0.19,-0.22
+NZO,Wind,Lifetime,,years,,linear,25,0,0,0,0,0,0,0
+NZO,Storage,CAPEX,,ils/kwh,,linear,375,0,0,-0.15,-0.27,-0.34,-0.4,-0.47
+NZO,Storage,OPEX,,ils/kwh/y,,linear,14.35264013,0,0,0,0,0,0,0
+NZO,Storage,Lifetime,,years,,linear,20,0,0,0,0,0,0,0
+NZO,Storage,Efficiency,,%,,linear,0.93,0,0,0,0,0,0,0.02
+NZO,Storage,Depth of Discharge,,%,,linear,0.9,0,0,0,0,0,0,0.055
+NZO,CCGT,CAPEX,,ils/kw,,linear,3779,0,0,0,0,0,0,0
+NZO,CCGT,OPEX,,ils/kw/y,,linear,164,0,0,0,0,0,0,0
+NZO,CCGT,VAR-OPEX,,ils/kwh/y,,linear,0.0139,0,0,0,0,0,0,0
+NZO,CCGT,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
+NZO,CCGT,Fuel,,ils/kwh,,linear,0.10284414106939704,0,0,0.11,0.33,1.28,1.28,1.28
+NZO,financial,WACC,"Electricity Autority - 30% renewables, nilve alout, average - 3.57% ",%,,linear,0.06,0,0,0,0,0,0,0
+NZO,emissions,co2,moep,ils/ton,,yoy,210,0,0,0.021,0.019,0.019,0.016,0.016
+NZO,emissions,sox,moep,ils/ton,,yoy,116233,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
+NZO,emissions,nox,moep,ils/ton,,yoy,161047,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
+NZO,emissions,pmx,moep,ils/ton,,yoy,368884,0,0,0.0339,0.0314,0.0314,0.0314,0.0314
+NZO,dfs,dfs-per-kwh,,ils/kwh,,linear,0.2,0,0,0,0,0,0,0
+NZO,nuclear,Capex,LARGE,ils/kw,,linear,23545,0,0,0,-0.05,-0.15,-0.25,-0.33
+NZO,nuclear,Opex,LARGE,ils/kw/y,,linear,540,0,0,0,0,0,0,0
+NZO,nuclear,var-opex,LARGE,ils/kwh/y,,linear,0.009,0,0,0,0,0,0,0
+NZO,nuclear,Lifetime,LARGE,years,,linear,60,0,0,0,0,0,0,0
+NZO,nuclear,fuel,LARGE,ils/kwh,,linear,0.003,0,0,0,0,0,0,0
+NZO,nuclear-SMR,Capex,SMR,ils/kw,,linear,29800,0,0,-0.1,-0.2,-0.3,-0.4,-0.5
+NZO,nuclear-SMR,Opex,SMR,ils/kw/y,,linear,420,0,0,0,0,0,0,0
+NZO,nuclear-SMR,var-opex,SMR,ils/kwh/y,,linear,0.008,0,0,0,0,0,0,0
+NZO,nuclear-SMR,Lifetime,SMR,years,,linear,60,0,0,0,0,0,0,0
+NZO,nuclear-SMR,fuel,SMR,ils/kwh,,linear,0.0035,0,0,0,0,0,0,0
+NZO,wasteToEnergy,Capex,,ils/kw,,linear,11000,0,0,0,-0.1,-0.15,-0.2,-0.25
+NZO,wasteToEnergy,Opex,,ils/kw/y,,linear,1100,0,0,0,-0.1,-0.15,-0.2,-0.25
+NZO,wasteToEnergy,Lifetime,,years,,linear,30,0,0,0,0,0,0,0
+NZO,v2g,var-opex,,ils/kw,,linear,0.1,0,0,0,0,0,0,0
+NZO,hydrogen-production,capex,,ils/kw,,linear,1600,0,0,-0.4,-0.5,-0.6,-0.7,-0.8
+NZO,hydrogen-production,opex,,ils/kw/y,,linear,80,0,0,-0.15,-0.25,-0.6,-0.55,-0.65
+NZO,hydrogen-production,var-opex,,ils/kw,,linear,0.006060606060606061,0,0,-0.15,-0.25,-0.35,-0.55,-0.65
+NZO,hydrogen-production,lifetime,,years,,linear,20,0,0,0,0,0,0,0
+NZO,hydrogen,storage,,ils/kw,,linear,0.012121212121212121,0,0,-0.15,-0.3,-0.45,-0.55,-0.6
+NZO,hydrogen-reuse,capex,,ils/kw,,linear,800,0,0,0,0,0,0,0
+NZO,hydrogen-usage,capex,,ils/kw,,linear,3600,0,0,0,0,0,0,0
+NZO,hydrogen-usage,opex,,ils/kw/y,,linear,90,0,0,0,0,0,0,0
+NZO,hydrogen-usage,lifetime,,years,,linear,35,0,0,0,0,0,0,0
+NZO,hydrogen,fuel,,ils/kwh,,linear,0.8,0,0,-0.05,-0.2,-0.3,-0.4,-0.45
+NZO,ccgt-emissions,co2,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,486,0,0,0,0,0,0,0
+NZO,ccgt-emissions,nox,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.26,0,0,0,0,0,0,0
+NZO,ccgt-emissions,sox,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.02,0,0,0,0,0,0,0
+NZO,ccgt-emissions,pmx,,g/kwh,CCGT emission factor (moved from 20_parameters),linear,0.01,0,0,0,0,0,0,0

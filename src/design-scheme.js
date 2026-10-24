@@ -49,9 +49,9 @@ const DESIGN_FORMER_CALCULATED_CELLS = {
   '20_year-input': ['C16:C17']
 };
 
-// Number formats. In 13_tech-params, columns H:N (change_2022..2050) hold fractions (-0.162 = a 16.2% decrease), shown as percent.
+// Number formats. In 13_tech-params, columns I:O (change_2022..2050) hold fractions (-0.162 = a 16.2% decrease), shown as percent.
 const DESIGN_NUMBER_FORMATS = {
-  '13_tech-params': [['H2:N200', '0.0%']]
+  '13_tech-params': [['I2:O200', '0.0%']]
 };
 
 // Tab order = tab codes: documentation, 2x single year (Predict Year), 3x scenarios, 1x shared base data, system.

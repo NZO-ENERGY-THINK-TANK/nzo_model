@@ -193,8 +193,8 @@ var YEAR_STATE_HEADERS_WITH_COSTS = ['name'].concat(YEAR_STATE_HEADERS).concat([
   'wasteToEnergyTotalCummulativeNPV',
   'hydrogenTotalCummulativeNPV',
   'totalCostCummulativeNPV',
-  'maxNetDemand'
-  
+  'maxNetDemand',
+  'paramSet'
 ]);
 
 var KEYFRAME_HEADERS = [
@@ -361,6 +361,7 @@ class YearState{
    * 3. Annuity Calculation: Uses PMT to spread CAPEX over the asset's lifetime.
    */
   calculateCosts(costsDb, previousYear, parameters) {
+    this.paramSet = costsDb.paramSet; // the 13_tech-params set these costs were computed with
     // 1. Initialization for the first year (Base Case)
     if (previousYear === null || previousYear === undefined) {
       previousYear = ZERO_YEAR_STATE;

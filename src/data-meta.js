@@ -16,7 +16,7 @@ const SHEET_MUST_RUN_INPUT = '11_must-run-yearly';
 
 
 const DATA_HASH_RANGES = [
-  {sheet: '13_tech-params', row: 1, col: 1, rows: 60, cols: 14, pick: null},
+  {sheet: '13_tech-params', row: 1, col: 1, rows: 200, cols: 15, pick: null},
   {sheet: SHEET_DEMAND_INPUT, row: 2, col: 1, rows: 28, cols: 3, pick: null},
   {sheet: SHEET_MUST_RUN_INPUT, row: 2, col: 1, rows: 28, cols: 2, pick: null},
   {sheet: '12_raw-data-hourly', row: 2, col: 1, rows: 8760, cols: 14, pick: null}

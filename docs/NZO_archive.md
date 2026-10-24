@@ -32,7 +32,8 @@
 
 - הלשונית `13_assumptions` שונתה ל-`13_tech-params` (השם הקודם כללי מדי). `assumptions.js` → `tech-params.js`, `SHEET_ASSUMPTIONS` → `SHEET_TECH_PARAMS`, `data/costs.csv` → `data/tech-params.csv` (תוכן זהה). עודכנו `sync.js`, `data-meta.js` (טווח ה-hash), `design-scheme.js`, התיעוד והדיאגרמות.
 - שם הלשונית נכלל ב-hash, ולכן אחרי שינוי השם במאסטר נדרשים `Update data hash` וגרסת נתונים חדשה. בעותקי חוקרים נדרש שינוי שם ידני של הלשונית לפני Sync.
-- השלב הבא (מתוכנן): עמודת `param_set` ב-`13_tech-params` (סט NZO כברירת מחדל, סטים נוספים כמו רשות החשמל עם נפילה ל-NZO), ובחירת הסט לכל Scenario.
+- **סטים של פרמטרים (`param_set`):** עמודה A חדשה ב-`13_tech-params` ובקובץ `data/tech-params.csv`. הסט `NZO` (`DEFAULT_PARAM_SET`) מכיל את כל השורות; סט אחר מכיל רק את השורות השונות, ושורה חסרה נלקחת מ-`NZO`. `CostsDb` מאונדקס לפי סט, `forSet(name)` מחזיר תצוגה של סט אחד, ושורה כפולה (set/product/parameter) עוצרת את הריצה. עמודה `paramSet` בטבלת ההגדרות של `30_scenarios-input` (ריק = `NZO`, רשימה נפתחת שנבנית ב-Set up scenario settings), ועמודה `paramSet` אחרונה ב-`31_scenarios-yearly`. טווח ה-hash של 13: 200 שורות × 15 עמודות (היה 60 × 14); פורמט האחוזים עבר ל-I:O. Predict Year לא מחשב עלויות ולכן לא בוחר סט. מבחן הייחוס משתמש ב-`NZO` ואמור לעבור ללא שינוי.
+- **גרסת קוד 3.0.0 (24.10.2026):** שינוי מבנה בלשונית 13 (שם ועמודה) ובטבלת ההגדרות. בעותקי חוקרים: Sync (מעדכן את 13) ואחריו Set up scenario settings.
 
 ### 17 באוקטובר 2026 – הפרדת שני ה-use cases וקידוד לשוניות
 
