@@ -1,5 +1,5 @@
-const SHEET_ASSUMPTIONS = '13_assumptions'
-// Header row of 13_assumptions = header row of data/costs.csv (sheet row 1). Values per year are computed in code.
+const SHEET_TECH_PARAMS = '13_tech-params'
+// Header row of 13_tech-params = header row of data/tech-params.csv (sheet row 1). Values per year are computed in code.
 var FORECASTED_PARAM_HEADERS = [
   'product',
   'parameter',
@@ -83,7 +83,7 @@ class ForecastedParam {
    * Initializes the parameter and calculates values for all years.
    * * @param {Array} row - Raw data row from the spreadsheet. 
    * Note: The 'row' array is consumed (shifted) during initialization.
-   * Row layout = data/costs.csv: 6 descriptor columns, base_price, and 7 change columns (2022..2050).
+   * Row layout = data/tech-params.csv: 6 descriptor columns, base_price, and 7 change columns (2022..2050).
    */
   constructor(row){
     // Extraction: Remove metadata from the start of the row
@@ -149,7 +149,7 @@ function addYearDimension(values) {
  */
 function getCostsDb() {
   // Extract: Read raw rows, skipping the header line
-  var rows = readTableFromSheet(SHEET_ASSUMPTIONS, 1, FORECASTED_PARAM_HEADERS);
+  var rows = readTableFromSheet(SHEET_TECH_PARAMS, 1, FORECASTED_PARAM_HEADERS);
   // Transform: Convert raw data rows into smart objects containing forecasting logic
   costs = rows.map(row => new ForecastedParam(row));
   return new CostsDb(costs);

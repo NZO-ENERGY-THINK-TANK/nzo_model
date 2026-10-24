@@ -16,11 +16,11 @@
 | קוד | קבוצה | לשוניות |
 |---|---|---|
 | `0x`, `_` | מערכת | `00_documentation`, `_meta`, `_status` |
-| `1x` | נתוני בסיס, משותף לשני ה-use cases | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions` |
+| `1x` | נתוני בסיס, משותף לשני ה-use cases | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_tech-params` |
 | `2x` | **Use case 1: Predict Year** (שנה בודדת) | `20_year-input` (קלט), `21_year-summary`, `22_year-daily`, `23_year-hourly`, `24_year-chart-day`, `25_year-chart-annual`, `29_year-run-history` |
 | `3x` | **Use case 2: תרחישים** | `30_scenarios-input` (קלט: טבלת הגדרות + keyframes), `31_scenarios-yearly`, `32_scenarios-charts` (גרפים לכל Scenario, תיבת סימון להשמטה) |
 
-**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Run Scenarios קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_assumptions`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
+**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Run Scenarios קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_tech-params`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
 
 ### קלטים
 
@@ -30,7 +30,7 @@
 | `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `hydrogenEfficiency`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes, ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
 | `12_raw-data-hourly` | פרופיל שעתי של שנת ייחוס (8,760 שעות): ביקוש, סולארי, רוח. מקור לקבועי שנת הייחוס |
 | `10_demand-yearly`, `11_must-run-yearly` | תחזיות ביקוש שנתיות לפי תרחיש (2023–2050) וקיבולת must-run לפי שנה |
-| `13_assumptions` | CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |
+| `13_tech-params` | CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |
 | `06_sensitivity-analysis`, `40_stochastic-analysis-input` | (לא בשימוש בקוד מאז 4.10.2026) |
 
 ### פלט והתנהגות
@@ -53,14 +53,14 @@
 |---|---|---|
 | Predict Year | סימולציה לשנה אחת לפי `20_year-input` | `23_year-hourly`, `22_year-daily`, `21_year-summary`, `29_year-run-history` |
 | Run Scenarios (בונה את כל ה-Scenarios) | כל מפות הדרכים מ-`30_scenarios-input`, שנה אחר שנה | `31_scenarios-yearly` |
-| Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_assumptions`, `_meta`, `_status` |
+| Sync from master (בעותק של חוקר) | מעתיקה מהמאסטר את נתוני הבסיס (טווחי ה-hash של `10`–`13`) אחרי בדיקת hash המאסטר וכותרות | `10_demand-yearly`, `11_must-run-yearly`, `12_raw-data-hourly`, `13_tech-params`, `_meta`, `_status` |
 | Advanced: Run / Record reference test | בדיקת תרחיש ייחוס מול ערכים שמורים ב-`reference_test_expected.js` | לא כותבות ללשוניות |
 | Advanced: Update data hash / Check data status | רישום גרסת נתונים ו-hash ב-`_meta`, ובדיקה שהנתונים תואמים | `_meta`, `_status` |
 | Advanced: Apply design scheme | צבעי לשוניות, הגנות באזהרה, סדר לשוניות, תיעוד התפריט, טבלת הגליונות והדיאגרמה | `00_documentation` |
 
 > **ה-hash תלוי בשמות הלשוניות:** הוא כולל את שם הלשונית והטווח (`#שם!טווח`). אחרי שינוי שם של לשונית בסיס (10–13) צריך להריץ במאסטר Update data hash ולתייג גרסת נתונים חדשה (למשל `data-1.8`), אחרת Sync בעותקים ייעצר עם "המאסטר אינו תואם ל-hash הרשום".
 
-> **הוסר 17.10.2026:** הלשונית `14_assumptions-yearly` (עותק מחושב של `13_assumptions` לפי שנה), הפונקציה `saveCosts` והפעולה Calculate Costs. הקוד בונה את אותה טבלה בזיכרון (`getCostsDb`) ואף לשונית לא תלויה בה. הקוד שנמחק נשמר ב-`NZO_removed_code.md`.
+> **הוסר 17.10.2026:** הלשונית `14_assumptions-yearly` (עותק מחושב של `13_tech-params` לפי שנה), הפונקציה `saveCosts` והפעולה Calculate Costs. הקוד בונה את אותה טבלה בזיכרון (`getCostsDb`) ואף לשונית לא תלויה בה. הקוד שנמחק נשמר ב-`NZO_removed_code.md`.
 
 ### הנחות מידול שכדאי לאשר
 - גרעין ומימן מיובא נספרים בתוך `renewableConsumption`.
@@ -80,7 +80,7 @@
 - **Scenario** = מודל שלם (כמה שנות מפתח). **YearState** (בעבר `Scenario`) = מצב של שנה אחת. **keyframes** = שורות ב-`30_scenarios-input`.
 - מזהים עיקריים בקוד: `chooseScenario`, `readScenariosFromKeyframes`, `groupYearsIntoScenarios`, `saveScenario`, `class YearState`, `Scenario.years`, `generateYearStates`, `saveYearStatesOutput`, `YEAR_STATE_HEADERS`, `KEYFRAME_HEADERS`.
 - שמות הלשוניות בקוד מוגדרים בקבועי `SHEET_*` (18 קבועים); אין עוד שמות לשוניות כמחרוזות בקוד.
-- `getCostsDb` (ב-`assumptions.js`) בונה בזיכרון את טבלת ההנחות המורחבת מ-`13_assumptions` (מחיר בסיס כפול 1+`change_YYYY` לכל שנה). `saveCosts` והלשונית `14` הוסרו.
+- `getCostsDb` (ב-`tech-params.js`) בונה בזיכרון את טבלת ההנחות המורחבת מ-`13_tech-params` (מחיר בסיס כפול 1+`change_YYYY` לכל שנה). `saveCosts` והלשונית `14` הוסרו.
 - שמות עמודות: שדות השעה אוחדו (`…Generation`, `hydrogenImported`, `solarToV2g`). נשארו: `Cummulative` (typo, נשאר בכוונה: פיבוטים וגרף תלויים בו), כותרות קלט (`Product`/`Parameter`/`Base Price`/`val_base`), `maxFossilCapacity`.
 
 ## 2. מצב נוכחי

@@ -28,6 +28,12 @@
 
 > הערה: רשומות מלפני 2 באוקטובר 2026 (אחה"צ) משתמשות בשמות הישנים (`choosScenario`, `allScenarios`, `3_scenarios-input` וכד'). המיפוי לשמות החדשים נמצא בסעיף "איחוד מינוח" למטה.
 
+### 24 באוקטובר 2026 – שינוי שם `13_assumptions` ל-`13_tech-params`
+
+- הלשונית `13_assumptions` שונתה ל-`13_tech-params` (השם הקודם כללי מדי). `assumptions.js` → `tech-params.js`, `SHEET_ASSUMPTIONS` → `SHEET_TECH_PARAMS`, `data/costs.csv` → `data/tech-params.csv` (תוכן זהה). עודכנו `sync.js`, `data-meta.js` (טווח ה-hash), `design-scheme.js`, התיעוד והדיאגרמות.
+- שם הלשונית נכלל ב-hash, ולכן אחרי שינוי השם במאסטר נדרשים `Update data hash` וגרסת נתונים חדשה. בעותקי חוקרים נדרש שינוי שם ידני של הלשונית לפני Sync.
+- השלב הבא (מתוכנן): עמודת `param_set` ב-`13_tech-params` (סט NZO כברירת מחדל, סטים נוספים כמו רשות החשמל עם נפילה ל-NZO), ובחירת הסט לכל Scenario.
+
 ### 17 באוקטובר 2026 – הפרדת שני ה-use cases וקידוד לשוניות
 
 **בוצע (באישור David, צעד אחר צעד; אומת ב-Run reference test = PASS אחרי כל שלב):**

@@ -20,7 +20,7 @@ const DESIGN_SCHEME = {
   '10_demand-yearly': 'base',
   '11_must-run-yearly': 'base',
   '12_raw-data-hourly': 'base',
-  '13_assumptions': 'base',
+  '13_tech-params': 'base',
 
   '20_year-input': 'input',
   '21_year-summary': 'output',
@@ -49,9 +49,9 @@ const DESIGN_FORMER_CALCULATED_CELLS = {
   '20_year-input': ['C16:C17']
 };
 
-// Number formats. In 13_assumptions, columns H:N (change_2022..2050) hold fractions (-0.162 = a 16.2% decrease), shown as percent.
+// Number formats. In 13_tech-params, columns H:N (change_2022..2050) hold fractions (-0.162 = a 16.2% decrease), shown as percent.
 const DESIGN_NUMBER_FORMATS = {
-  '13_assumptions': [['H2:N200', '0.0%']]
+  '13_tech-params': [['H2:N200', '0.0%']]
 };
 
 // Tab order = tab codes: documentation, 2x single year (Predict Year), 3x scenarios, 1x shared base data, system.
@@ -59,7 +59,7 @@ const DESIGN_TAB_ORDER = [
   '00_documentation',
   '20_year-input', '21_year-summary', '22_year-daily', '23_year-hourly', '24_year-chart-day', '25_year-chart-annual', '29_year-run-history',
   '30_scenarios-input', '31_scenarios-yearly', '32_scenarios-charts',
-  '10_demand-yearly', '11_must-run-yearly', '12_raw-data-hourly', '13_assumptions',
+  '10_demand-yearly', '11_must-run-yearly', '12_raw-data-hourly', '13_tech-params',
   '_meta', '_status'
 ];
 
@@ -213,7 +213,7 @@ const DESIGN_MENU_DOCS = [
   ['תפריט NZO Model', 'מה הפעולה עושה', 'לשוניות שמתעדכנות'],
   ['Predict Year', 'מריצה את המודל השנתי לשנה שב-20_year-input!C3: תמהיל ייצור, אחוז מתחדשות, פליטות', '23_year-hourly, 22_year-daily, 21_year-summary, 29_year-run-history'],
   ['Run Scenarios', 'מריצה את כל ה-scenarios שב-30_scenarios-input ומחשבת עלויות. מבקשת אישור לפני דריסה. בסיום פותחת את 32_scenarios-charts', '31_scenarios-yearly, 32_scenarios-charts'],
-  ['Sync from master', 'מעתיקה את נתוני הבסיס (10–13) מהמאסטר לעותק שלך, בודקת תקינות (hash וכותרות). לא נוגעת בקלט שלך ובתוצאות. מבקשת אישור לפני דריסה', '10_demand-yearly, 11_must-run-yearly, 12_raw-data-hourly, 13_assumptions, _meta, _status'],
+  ['Sync from master', 'מעתיקה את נתוני הבסיס (10–13) מהמאסטר לעותק שלך, בודקת תקינות (hash וכותרות). לא נוגעת בקלט שלך ובתוצאות. מבקשת אישור לפני דריסה', '10_demand-yearly, 11_must-run-yearly, 12_raw-data-hourly, 13_tech-params, _meta, _status'],
   ['Advanced → Run reference test', 'מריצה את scenario הייחוס ומשווה לערכים השמורים בקוד. PASS פירושו שהתוצאות לא השתנו', 'לא כותבת ללשוניות'],
   ['Advanced → Record reference test', 'מקליטה ערכי ייחוס חדשים. רק לשינוי מכוון בתוצאות, ואז מדביקים ל-reference_test_expected.js', 'לא כותבת ללשוניות'],
   ['Advanced → Refresh scenario charts', 'בונה מחדש את הגרפים מ-31_scenarios-yearly הקיים, בלי להריץ שוב את המודל. שומרת את סימוני התרחישים', '32_scenarios-charts'],
@@ -277,7 +277,7 @@ const DESIGN_SHEETS_TABLE = [
     ['10_demand-yearly', 'ביקוש שנתי (TWh) לפי תרחיש, 2023-2050. מקור: תחזית נוגה. נטען מ-data/yearly_demand.csv'],
     ['11_must-run-yearly', 'קיבולת must-run (MW) לפי שנה. נטען מ-data/must_run_yearly.csv'],
     ['12_raw-data-hourly', 'נתונים שעתיים לשנת ייחוס 2023. מקור: דו"ח מצב משק החשמל. נטען מ-data/hourly_demand23.csv'],
-    ['13_assumptions', 'הנחות לפי טכנולוגיה: עלויות, אורך חיים, יעילות, מקדמי פליטה וירידת מחירים (הערכות ומחקרים, בהם Bloomberg). נטען מ-data/costs.csv']]},
+    ['13_tech-params', 'הנחות לפי טכנולוגיה: עלויות, אורך חיים, יעילות, מקדמי פליטה וירידת מחירים (הערכות ומחקרים, בהם Bloomberg). נטען מ-data/tech-params.csv']]},
   {title: 'מערכת', color: '#757575',
    note: 'גרסאות ובדיקת תקינות', tabs: [
     ['_meta', 'גרסת נתונים וחתימה (hash)'],

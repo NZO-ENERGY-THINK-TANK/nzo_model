@@ -14,7 +14,7 @@ const SYNC_PROPERTY_LAST = 'last_sync';
 
 // Headers (row 1) that the code relies on in each synced tab. Costs: exact order (readTableFromSheet checks position).
 const SYNC_REQUIRED_HEADERS = {
-  '13_assumptions': {ordered: true, headers: function() { return FORECASTED_PARAM_HEADERS; }},
+  '13_tech-params': {ordered: true, headers: function() { return FORECASTED_PARAM_HEADERS; }},
   '10_demand-yearly': {ordered: false, headers: function() {
     return ['year'].concat(Object.keys(DEMAND_FORECAST_COLUMNS).map(function(k) { return DEMAND_FORECAST_COLUMNS[k]; }));
   }},
