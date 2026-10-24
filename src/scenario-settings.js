@@ -4,7 +4,8 @@
  *
  * Layout of 30_scenarios-input (top to bottom):
  *   row 1        title "scenario settings"
- *   row 2        headers: name | demandForecast | interestRate | hydrogenEfficiency | paramSet
+ *   row 2        headers: name | demandForecast | interestRate | paramSet
+ *                (hydrogenEfficiency was column D until 24.10.2026; it is a 13_tech-params row now)
  *   rows 3-22    one row per scenario (room for 20 scenarios)
  *   row 24       title "keyframes"
  *   row 25       keyframe headers (KEYFRAME_HEADERS)
@@ -18,9 +19,9 @@ const KEYFRAMES_TITLE_ROW = 24;
 const KEYFRAMES_HEADER_ROW = 25;
 const KEYFRAMES_NAME_VALIDATION_ROWS = 400;
 // Default discount rate for new settings rows (20_year-input no longer has an interest row).
-const SCENARIO_SETTINGS_DEFAULT_INTEREST = 0.06;
+const SCENARIO_SETTINGS_DEFAULT_INTEREST = 0.035; // Electricity Authority discount rate (24.10.2026; was 0.06)
 // paramSet = param_set of 13_tech-params used for the scenario costs (empty = DEFAULT_PARAM_SET).
-const SCENARIO_SETTINGS_HEADERS = ['name', 'demandForecast', 'interestRate', 'hydrogenEfficiency', 'paramSet'];
+const SCENARIO_SETTINGS_HEADERS = ['name', 'demandForecast', 'interestRate', 'paramSet'];
 
 /**
  * Settings of the reference test scenario ("Base"). Kept in code so edits in the sheet do not change the reference.
@@ -28,8 +29,7 @@ const SCENARIO_SETTINGS_HEADERS = ['name', 'demandForecast', 'interestRate', 'hy
  */
 const REFERENCE_SCENARIO_SETTINGS = {
   demandForecast: 'Noga conservative',
-  interestRate: 0.06,
-  hydrogenEfficiency: 0.5,
+  interestRate: 0.035, // Electricity Authority discount rate (24.10.2026; was 0.06)
   paramSet: 'NZO' // literal (not DEFAULT_PARAM_SET): file load order in Apps Script is not guaranteed
 };
 
@@ -38,8 +38,9 @@ const SCENARIO_LAYOUT_HELP = 'Run NZO Model > Advanced > Set up scenario setting
 /** True when the sheet has the new layout (settings table on top, keyframes from row 25). */
 function _hasNewScenarioLayout(sheet) {
   var h = sheet.getRange(SETTINGS_HEADER_ROW, 1, 1, SCENARIO_SETTINGS_HEADERS.length).getValues()[0];
-  var k = sheet.getRange(KEYFRAMES_HEADER_ROW, 1, 1, 2).getValues()[0];
-  return SCENARIO_SETTINGS_HEADERS.every(function(v, j) { return h[j] === v; }) && k[0] === 'name' && k[1] === 'year';
+  var k = sheet.getRange(KEYFRAMES_HEADER_ROW, 1, 1, KEYFRAME_HEADERS.length).getValues()[0];
+  return SCENARIO_SETTINGS_HEADERS.every(function(v, j) { return h[j] === v; }) &&
+    KEYFRAME_HEADERS.every(function(v, j) { return k[j] === v; });
 }
 
 /** Stops with a clear message when 30_scenarios-input is not in the new layout. */
@@ -53,7 +54,7 @@ function assertScenarioLayout() {
 }
 
 /**
- * Reads the settings table. Returns { scenarioName: {demandForecast, interestRate, hydrogenEfficiency, paramSet} }.
+ * Reads the settings table. Returns { scenarioName: {demandForecast, interestRate, paramSet} }.
  * An empty paramSet means DEFAULT_PARAM_SET; an unknown set stops the run when costs are calculated (CostsDb.forSet).
  * Throws a clear error on invalid values.
  */
@@ -66,8 +67,7 @@ function readScenarioSettings() {
     if (name === '') return;
     var where = SHEET_SCENARIO_KEYFRAMES + ' settings row ' + (SETTINGS_FIRST_ROW + i) + ' (' + name + ')';
     if (settings.hasOwnProperty(name)) throw new Error('Duplicate scenario name in ' + where);
-    var s = {demandForecast: row[1], interestRate: row[2], hydrogenEfficiency: row[3],
-      paramSet: String(row[4]).trim() || DEFAULT_PARAM_SET};
+    var s = {demandForecast: row[1], interestRate: row[2], paramSet: String(row[3]).trim() || DEFAULT_PARAM_SET};
     _validateScenarioSettings(s, where);
     settings[name] = s;
   });
@@ -80,9 +80,6 @@ function _validateScenarioSettings(s, where) {
   }
   if (typeof s.interestRate !== 'number' || !(s.interestRate >= 0 && s.interestRate < 1)) {
     throw new Error(where + ': interestRate must be a number from 0 to 1 (e.g. 6%), found ' + s.interestRate);
-  }
-  if (typeof s.hydrogenEfficiency !== 'number' || !(s.hydrogenEfficiency > 0 && s.hydrogenEfficiency <= 1)) {
-    throw new Error(where + ': hydrogenEfficiency must be a number above 0 and up to 1 (e.g. 50%), found ' + s.hydrogenEfficiency);
   }
 }
 
@@ -104,6 +101,8 @@ function applyScenarioSettings(scenarios) {
  * - Old layout (keyframes header in row 1): moves the keyframes down (rows are inserted above them, so formulas follow),
  *   and moves a settings table from columns T:W (previous version) to the top.
  * - Adds a settings row for every scenario name found in the keyframes (defaults from the current 20_year-input; existing rows are kept).
+ * - Removes the columns moved to 13_tech-params on 24.10.2026: hydrogenEfficiency (settings table, column D) and
+ *   storageEfficiency / storageDepthOfDischarge (keyframes, columns F:G). Other cells shift left; formulas follow.
  * - Fills an empty paramSet with DEFAULT_PARAM_SET (rows created before paramSet existed).
  * - Adds dropdowns: demandForecast and paramSet (the sets in 13_tech-params; run again after adding a set) in the settings table,
  *   and the keyframes "name" column limited to the names in the settings table.
@@ -128,6 +127,9 @@ function createScenarioSettingsTable() {
     throw new Error(SHEET_SCENARIO_KEYFRAMES + ': keyframes header (name, year, ...) not found in row 1 or row ' + KEYFRAMES_HEADER_ROW + '.');
   }
 
+  // Columns moved to 13_tech-params (24.10.2026)
+  var removed = _removeMovedColumns(sheet);
+
   // Titles and headers
   sheet.getRange(SETTINGS_TITLE_ROW, 1).setValue('scenario settings (one row per scenario; the names here are the only names allowed in the keyframes below)').setFontWeight('bold');
   sheet.getRange(SETTINGS_HEADER_ROW, 1, 1, SCENARIO_SETTINGS_HEADERS.length).setValues([SCENARIO_SETTINGS_HEADERS])
@@ -146,13 +148,12 @@ function createScenarioSettingsTable() {
   readTableFromSheet(SHEET_SCENARIO_KEYFRAMES, KEYFRAMES_HEADER_ROW, KEYFRAME_HEADERS).forEach(function(r) {
     if (names.indexOf(r[0]) === -1) names.push(r[0]);
   });
-  var params = getParameters();
   var forecastRow = readParams().filter(function(row) { return row[0] === 'demand-forecast'; })[0];
-  var defaults = [forecastRow ? forecastRow[2] : '', SCENARIO_SETTINGS_DEFAULT_INTEREST, params.hydrogenEfficenty, DEFAULT_PARAM_SET];
+  var defaults = [forecastRow ? forecastRow[2] : '', SCENARIO_SETTINGS_DEFAULT_INTEREST, DEFAULT_PARAM_SET];
   var sideByName = {};
   sideRows.forEach(function(r) { sideByName[r[0]] = r; });
   var rows = names.filter(function(n) { return !existing[n]; }).map(function(n) {
-    return sideByName[n] ? [n, sideByName[n][1], sideByName[n][2], sideByName[n][3], DEFAULT_PARAM_SET] : [n].concat(defaults);
+    return sideByName[n] ? [n, sideByName[n][1], sideByName[n][2], DEFAULT_PARAM_SET] : [n].concat(defaults);
   });
   if (filled + rows.length > SETTINGS_MAX_ROWS) {
     throw new Error('Too many scenarios for the settings table (room for ' + SETTINGS_MAX_ROWS + ').');
@@ -160,7 +161,7 @@ function createScenarioSettingsTable() {
   if (rows.length) {
     sheet.getRange(SETTINGS_FIRST_ROW + filled, 1, rows.length, SCENARIO_SETTINGS_HEADERS.length).setValues(rows);
   }
-  sheet.getRange(SETTINGS_FIRST_ROW, 3, SETTINGS_MAX_ROWS, 2).setNumberFormat('0.0%');
+  sheet.getRange(SETTINGS_FIRST_ROW, 3, SETTINGS_MAX_ROWS, 1).setNumberFormat('0.0%');
 
   // paramSet: existing rows without a set get the default
   var setCol = SCENARIO_SETTINGS_HEADERS.indexOf('paramSet') + 1;
@@ -187,6 +188,7 @@ function createScenarioSettingsTable() {
 
   SpreadsheetApp.flush();
   var msg = (firstRun ? 'Keyframes moved down to row ' + (KEYFRAMES_HEADER_ROW + 1) + '. ' : '') +
+    (removed.length ? 'Removed (moved to ' + SHEET_TECH_PARAMS + '): ' + removed.join(', ') + '. ' : '') +
     rows.length + ' scenario(s) added to the settings table.' +
     (setsFilled ? ' paramSet set to ' + DEFAULT_PARAM_SET + ' in ' + setsFilled + ' existing row(s).' : '');
   try { SpreadsheetApp.getUi().alert('Scenario settings', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) { Logger.log(msg); }
@@ -195,4 +197,27 @@ function createScenarioSettingsTable() {
 function _hasKeyframesAt(sheet, row) {
   var k = sheet.getRange(row, 1, 1, 2).getValues()[0];
   return k[0] === 'name' && k[1] === 'year';
+}
+
+/**
+ * Removes the columns that moved to 13_tech-params on 24.10.2026, if still present:
+ * settings table column D "hydrogenEfficiency" and keyframe columns F:G "storageEfficiency", "storageDepthOfDischarge".
+ * Deletes cells (shift left) only inside the settings table / keyframes area. Returns the removed header names.
+ */
+function _removeMovedColumns(sheet) {
+  var removed = [];
+  var settingsCol = sheet.getRange(SETTINGS_HEADER_ROW, 1, 1, 8).getValues()[0].indexOf('hydrogenEfficiency') + 1;
+  if (settingsCol > 0) {
+    sheet.getRange(SETTINGS_HEADER_ROW, settingsCol, SETTINGS_MAX_ROWS + 1, 1).deleteCells(SpreadsheetApp.Dimension.COLUMNS);
+    removed.push('hydrogenEfficiency');
+  }
+  ['storageEfficiency', 'storageDepthOfDischarge'].forEach(function(name) {
+    var header = sheet.getRange(KEYFRAMES_HEADER_ROW, 1, 1, 30).getValues()[0];
+    var col = header.indexOf(name) + 1;
+    if (col > 0) {
+      sheet.getRange(KEYFRAMES_HEADER_ROW, col, sheet.getMaxRows() - KEYFRAMES_HEADER_ROW + 1, 1).deleteCells(SpreadsheetApp.Dimension.COLUMNS);
+      removed.push(name);
+    }
+  });
+  return removed;
 }

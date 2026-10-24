@@ -42,12 +42,11 @@ const DESIGN_SCHEME = {
 const DESIGN_UNPROTECTED_TABS = ['32_scenarios-charts'];
 
 // Calculated cells inside an input tab: grey text + warning-only protection. None at present: 20_year-input has only
-// plain inputs (storage efficiency and depth of discharge, rows 16-17, were formulas reading the removed tab 14_assumptions-yearly until 17.10.2026).
+// plain inputs (storage efficiency and depth of discharge were formulas reading the removed tab 14_assumptions-yearly until
+// 17.10.2026, then plain inputs, and moved to 13_tech-params on 24.10.2026).
 const DESIGN_CALCULATED_CELLS = {};
 // Cells that were calculated in an earlier version and are plain inputs now: grey text and background are reset.
-const DESIGN_FORMER_CALCULATED_CELLS = {
-  '20_year-input': ['C16:C17']
-};
+const DESIGN_FORMER_CALCULATED_CELLS = {};
 
 // Number formats. In 13_tech-params, columns I:O (change_2022..2050) hold fractions (-0.162 = a 16.2% decrease), shown as percent.
 const DESIGN_NUMBER_FORMATS = {
@@ -269,7 +268,7 @@ const DESIGN_SHEETS_TABLE = [
     ['29_year-run-history', 'יומן הרצות Predict Year: קלט, תוצאות, גרסת קוד וגרסת נתונים']]},
   {title: 'Use case 2: תרחישים (scenarios)', color: '#00695c',
    note: 'קלט ב-30_scenarios-input, הרצה בתפריט Run Scenarios', tabs: [
-    ['30_scenarios-input', 'למעלה: טבלת הגדרות לכל scenario (תחזית ביקוש, ריבית, נצילות מימן). מתחתיה: keyframes לפי שנה'],
+    ['30_scenarios-input', 'למעלה: טבלת הגדרות לכל scenario (תחזית ביקוש, ריבית, סט פרמטרים paramSet מתוך 13_tech-params). מתחתיה: keyframes לפי שנה'],
     ['31_scenarios-yearly', 'תוצאות כל ה-scenarios ברמה שנתית, כולל עלויות ופליטות'],
     ['32_scenarios-charts', 'גרפים לכל scenario, נבנים מ-31_scenarios-yearly (ציר X: שנים): עלות מהוונת מצטברת, עלות מצטברת לפי משאב עד שנת הסיום (עמודות מוערמות), שיעור אנרגיה מתחדשת, צריכת גז מצטברת (קווים), ובעמודות: הספק פוסילי, הספק סולארי, קיבולת אגירה, צריכת גז שנתית, פליטות CO2 שנתיות והתקנות סולאריות חדשות בשנה. תיבת סימון לכל scenario מסתירה אותו מכל הגרפים, ותיבה ראשית (A3) מסמנת או מנקה את כולם. מתחת לרשימת ה-scenarios טבלת גרפים: תיבת סימון להצגה והסתרה, ומספר סדר לשינוי הסדר (הגרפים מסתדרים מחדש אחרי כל שינוי)']]},
   {title: 'משותף לשני ה-use cases', color: '#6d4c41',
@@ -277,7 +276,7 @@ const DESIGN_SHEETS_TABLE = [
     ['10_demand-yearly', 'ביקוש שנתי (TWh) לפי תרחיש, 2023-2050. מקור: תחזית נוגה. נטען מ-data/yearly_demand.csv'],
     ['11_must-run-yearly', 'קיבולת must-run (MW) לפי שנה. נטען מ-data/must_run_yearly.csv'],
     ['12_raw-data-hourly', 'נתונים שעתיים לשנת ייחוס 2023. מקור: דו"ח מצב משק החשמל. נטען מ-data/hourly_demand23.csv'],
-    ['13_tech-params', 'הנחות לפי טכנולוגיה: עלויות, אורך חיים, יעילות, מקדמי פליטה וירידת מחירים (הערכות ומחקרים, בהם Bloomberg). נטען מ-data/tech-params.csv']]},
+    ['13_tech-params', 'פרמטרים לפי טכנולוגיה: עלויות (CAPEX, OPEX, דלק), אורך חיים, WACC, עלות מזהמים, מקדמי פליטה, ופרמטרים של הסימולציה (נצילות ועומק פריקה של אגירה, נצילות מימן), עם שינוי לכל שנה (change_YYYY). עמודה A, param_set, היא סט הפרמטרים: NZO (ברירת המחדל) מכיל את כל השורות, וסט אחר (למשל EA-2035, רשות החשמל) מכיל רק את השורות השונות; שורה חסרה נלקחת מ-NZO. כל scenario בוחר סט ב-paramSet, ו-Predict Year משתמש ב-NZO. נטען מ-data/tech-params.csv']]},
   {title: 'מערכת', color: '#757575',
    note: 'גרסאות ובדיקת תקינות', tabs: [
     ['_meta', 'גרסת נתונים וחתימה (hash)'],

@@ -9,10 +9,7 @@ var PARAMETER_TO_VARIABLE_NAME = {
   'Hydrogen In Storage': 'hydrogenStorage',
   'Hydrogen production capacity':'hydrogenProductionCapacity',
   'Hydrogen Import capacity':'hydrogenImportCapacity',
-  'Hydrogen efficenty':'hydrogenEfficenty',
   'predicted storage energy capacity': 'storageEnergy',
-  'storage efficiency': 'storageEfficiency',
-  'storage depth of discharge': 'storageDepthOfDischarge',
   'dfsHoursPerYear':'dfsHoursPerYear',
   'dfsReductionPerHour':'dfsReductionPerHour',
   'V2GEnergy':'v2gEnergy'
@@ -35,7 +32,7 @@ function getParameters() {
       PARAMETERS_UNITS[row[0]] = row[1];
     }
   });
-  update(parameters, internalParameters(parameters))
+  // Storage and hydrogen efficiency come from 13_tech-params (techParamsForYear); internalParameters() is applied in getInputData().
   return parameters;
 };
 
@@ -67,8 +64,6 @@ function parametersFromYearState(in_data, yearState,i) {
   params.solarCapacity = yearState.solarCapacity;
   params.windCapacity = yearState.windCapacity;
   params.storageEnergy = yearState.storageEnergy;
-  params.storageEfficiency = yearState.storageEfficiency;
-  params.storageDepthOfDischarge = yearState.storageDepthOfDischarge;
   params.v2gEnergy=yearState.v2gEnergy;
   params.dfsReductionPerHour=yearState.dfsReductionPerHour;
   params.dfsHoursPerYear=yearState.dfsHoursPerYear;
@@ -76,8 +71,9 @@ function parametersFromYearState(in_data, yearState,i) {
   params.wasteToEnergyCapacity=yearState.wasteToEnergyCapacity;
   params.hydrogenProductionCapacity=yearState.hydrogenProductionCapacity;
   params.hydrogenImportCapacity=yearState.hydrogenImportCapacity
+  // Technology parameters of this year from 13_tech-params, in the scenario's param_set (in_data.costsDb is a forSet() view)
+  update(params, techParamsForYear(in_data.costsDb, yearState.year));
   // Per-scenario settings (30_scenarios-input settings table)
-  params.hydrogenEfficenty = in_data.scenarioSettings.hydrogenEfficiency;
   params.interestRate = in_data.scenarioSettings.interestRate;
 
   // Constraint: Force Hydrogen storage to 0 in the base year (2025) as infrastructure doesn't exist yet

@@ -74,3 +74,12 @@
 - `pv-average` (capex, opex, lifetime) מחושב בקוד (`YearState.pvAverage`): ממוצע משוקלל של ארבעת סוגי ה-PV לפי היחסים של ה-scenario בכל שנה.
 
 הערות ל-`tech-params.csv`: הקוד מחשב `base_price × (1+pct)` בעצמו (אין עמודות מחושבות בגיליון). בכל טעינה, `13_tech-params` מוחלפת כולה ("Replace current sheet") והכותרת בשורה 1. כלל PV-Dual-Use: capex = capex של dual-use + capex של pv-commercial (מחושב ב-`pvAverage`).
+- שורות שמשפיעות על הסימולציה (לא רק על העלויות), מאז 24.10.2026: `Storage / Efficiency`, `Storage / Depth of Discharge` (הועברו מעמודות ה-keyframes, באותו מסלול: 2026 0.9083/0.81 עד 2050 0.95/0.9) ו-`hydrogen / efficiency` (0.5, הועבר מטבלת ההגדרות). הערכים הקודמים בשורות האגירה (0.93 ו-0.9) לא נקראו בקוד.
+
+### סט `EA-2035` (רשות החשמל)
+
+מקור: רשות החשמל, "קביעת יעדי אנרגיה מתחדשת ל-2035" (טיוטה לציבור, ינואר 2026): https://www.gov.il/BlobFolder/rfp/shim_2035/he/Files_Shimuah_shim_2035_malle.pdf (קישור בעמודה `source` של כל שורות הסט); הערכים מהקובץ הנלווה `Files_Shimuah_nisp_2035.xlsx`, גיליון "הנחות יסוד". שורות PV בלבד (Residential, Commercial, Utility: Capex, Opex, Lifetime); כל שאר השורות נלקחות מ-`NZO`.
+- Capex: `base_price` = ערך 2025 של הרשות (₪/קו"ט, שער 3.5 ₪ לדולר), ו-`change_YYYY` = היחס לערך 2025. Utility כולל קרקע 200 ₪; Commercial = (בלומברג + קרקע 60 ₪) × 1.1; Residential = בלומברג + 20%, בלי קרקע.
+- Opex: בסיס עלות התפעול הקבועה של הרשות, קבוע לאורך השנים (קרקע ומאגרים גדולים → Utility; מאגרים קטנים → Commercial, מיפוי לאישור; גגות → Residential).
+- Lifetime: 22 שנה (הרשות).
+- אין לרשות קטגוריית Dual-Use; בסט הזה Dual-Use נלקח מ-`NZO`, ולכן ה-capex שלו (dual-use + commercial, `pvAverage`) כולל את ה-Commercial של הרשות.

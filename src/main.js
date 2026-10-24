@@ -73,7 +73,7 @@ function calculateScenariosAndCosts() {
   if (!confirmOverwrite([SHEET_YEAR_STATES_OUTPUT, SHEET_SCENARIO_CHARTS])) return;
   var in_data = getInputData();
   var scenarios = readScenariosFromKeyframes();
-  var costsDb = getCostsDb();
+  var costsDb = in_data.costsDb;
 
   var allYearStates = []
   scenarios.forEach(function(scenario) {

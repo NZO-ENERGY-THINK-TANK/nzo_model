@@ -15,13 +15,15 @@ const REFERENCE_YEARS = [2030, 2040, 2050]; // years whose details are compared
 
 // Keyframes of the "Base" scenario, copied from 30_scenarios-input (2026-10-10).
 // Column order = KEYFRAME_HEADERS. Kept in code so edits in the sheet do not change the reference.
+// Storage efficiency and depth of discharge were keyframe columns until 24.10.2026 (2026: 0.9083/0.81 ... 2050: 0.95/0.9);
+// they now come from 13_tech-params (set NZO).
 const REFERENCE_KEYFRAMES = [
-  ['Base', 2026, 8000, 500, 6000, 0.9083333333333333, 0.81, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
-  ['Base', 2030, 18000, 500, 10000, 0.9166666666666666, 0.82, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
-  ['Base', 2035, 25000, 500, 20000, 0.925, 0.83, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
-  ['Base', 2040, 32500, 500, 30000, 0.9333333333333333, 0.85, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
-  ['Base', 2045, 40000, 500, 50000, 0.9416666666666667, 0.87, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
-  ['Base', 2050, 50000, 500, 80000, 0.95, 0.9, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3]
+  ['Base', 2026, 8000, 500, 6000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
+  ['Base', 2030, 18000, 500, 10000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
+  ['Base', 2035, 25000, 500, 20000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
+  ['Base', 2040, 32500, 500, 30000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
+  ['Base', 2045, 40000, 500, 50000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3],
+  ['Base', 2050, 50000, 500, 80000, 0, 0, 0, 0, 0, 0, 0, 0.2, 0.2, 0.3, 0.3]
 ];
 
 // Parameters that are overridden per year by the scenario; excluded from the input snapshot.
@@ -52,7 +54,7 @@ function _buildReferenceScenario() {
 /** Runs the reference scenario and returns {inputs, results}. Writes nothing to the sheet. */
 function _computeReference() {
   var in_data = getInputData();
-  var costsDb = getCostsDb();
+  var costsDb = in_data.costsDb;
   var scenario = _buildReferenceScenario();
   // Snapshot the inputs before simulate(), which updates parameters.hydrogenStorage.
   var inputs = {};

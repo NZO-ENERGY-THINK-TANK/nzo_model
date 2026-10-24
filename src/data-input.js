@@ -12,6 +12,10 @@ const DEMAND_FORECAST_COLUMNS = {
  */
 function getInputData() {
   var params = getParameters();
+  // 13_tech-params: costs and the technology parameters of the simulation. Predict Year uses the default set.
+  var costsDb = getCostsDb();
+  update(params, techParamsForYear(costsDb, params.currentYear));
+  update(params, internalParameters(params));
   var hoursGen = _getHoursGeneration();
   // Reference-year constants are computed from the hourly data, not read from 20_year-input.
   update(params, referenceYearParameters(hoursGen));
@@ -20,6 +24,7 @@ function getInputData() {
     hoursGen,
     futureForecast,
     forecastCache: {},
+    costsDb,
     // Merge strategy: Update static parameters with dynamic values derived from the forecast
     parameters: update(params, forecastParameters(params, futureForecast))
   };

@@ -20,14 +20,14 @@
 | `2x` | **Use case 1: Predict Year** (שנה בודדת) | `20_year-input` (קלט), `21_year-summary`, `22_year-daily`, `23_year-hourly`, `24_year-chart-day`, `25_year-chart-annual`, `29_year-run-history` |
 | `3x` | **Use case 2: תרחישים** | `30_scenarios-input` (קלט: טבלת הגדרות + keyframes), `31_scenarios-yearly`, `32_scenarios-charts` (גרפים לכל Scenario, תיבת סימון להשמטה) |
 
-**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Run Scenarios קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית ונצילות המימן של כל Scenario). קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_tech-params`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
+**הפרדת הקלטים:** Predict Year קורא קלטים רק מ-`20_year-input`, ו-Run Scenarios קורא קלטים רק מ-`30_scenarios-input` (וממנו מגיעים גם תחזית הביקוש, הריבית וסט הפרמטרים של כל Scenario). פרמטרים טכנולוגיים שמשפיעים על הסימולציה (נצילות ועומק פריקה של אגירה, נצילות מימן) נקראים מ-`13_tech-params` בשני ה-use cases (Predict Year: סט `NZO`; Scenario: הסט שלו), דרך `techParamsForYear`. קבועים פיזיקליים (שעות אפקטיביות סולארי 1,700 ורוח 2,930, ב-`config.js`) וגורמי פליטה של CCGT (`13_tech-params`, שורות `ccgt-emissions`) אינם קלט של אף use case. ההספקים וסך הביקוש של שנת הייחוס מחושבים מ-`12_raw-data-hourly`.
 
 ### קלטים
 
 | לשונית | תוכן |
 |---|---|
-| `20_year-input` | 17 שורות: תחזית ביקוש (`demand-forecast`, רשימה נפתחת), שנת היעד (`predicted year`), הספקי סולארי, רוח, גרעין, פסולת לאנרגיה, מימן (אחסון, ייצור, יבוא, נצילות), אגירה (אנרגיה, נצילות, עומק פריקה), DFS ו-V2G. כל השורות קלט רגיל (שורות 16–17, נצילות ועומק פריקה של אגירה, היו נוסחאות מ-`14_assumptions-yearly` עד 17.10.2026 והפכו לקלט) |
-| `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `hydrogenEfficiency`, `paramSet`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes, ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
+| `20_year-input` | 14 שורות: תחזית ביקוש (`demand-forecast`, רשימה נפתחת), שנת היעד (`predicted year`), הספקי סולארי, רוח, גרעין, פסולת לאנרגיה, מימן (אחסון, ייצור, יבוא), אנרגיית אגירה, DFS ו-V2G. כל השורות קלט רגיל. נצילות מימן ונצילות ועומק פריקה של אגירה הוסרו ב-24.10.2026 ונקראים מ-`13_tech-params` |
+| `30_scenarios-input` | שורות 1–20: טבלת הגדרות לכל Scenario (`name`, `demandForecast`, `interestRate`, `paramSet`; רשימות נפתחות). שורה 24: כותרת, שורה 25: כותרות keyframes (ללא נצילות ועומק פריקה של אגירה מאז 24.10.2026), ומשם מפות הדרכים (שנות מפתח לכל Scenario). שם ב-keyframes חייב להופיע בטבלת ההגדרות. מופעל בעותק ישן דרך Advanced → Set up scenario settings |
 | `12_raw-data-hourly` | פרופיל שעתי של שנת ייחוס (8,760 שעות): ביקוש, סולארי, רוח. מקור לקבועי שנת הייחוס |
 | `10_demand-yearly`, `11_must-run-yearly` | תחזיות ביקוש שנתיות לפי תרחיש (2023–2050) וקיבולת must-run לפי שנה |
 | `13_tech-params` | עמודה A `param_set`: סט הפרמטרים של השורה. הסט `NZO` (ברירת המחדל) מכיל את כל השורות; סט אחר (למשל של רשות החשמל) מכיל רק את השורות השונות, ושורה חסרה נלקחת מ-`NZO`. כל Scenario בוחר סט בעמודה `paramSet` בטבלת ההגדרות. CAPEX, OPEX, דלק, אורך חיים, פליטות (כולל `ccgt-emissions`), ירידות מחירים (`change_2022`…`change_2050`, שברים: -0.162 = ירידה של 16.2%). הקוד משלים את השנים שביניהן |

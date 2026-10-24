@@ -6,8 +6,6 @@ var DEFAULT_YEAR_STATE_PARAMS = {
   'solarCapacity': 0, 
   'windCapacity': 0,  
   'storageEnergy': 0,
-  'storageEfficiency': 0.95,
-  'storageDepthOfDischarge': 0.9,
   'v2gEnergy':0,
   'name': undefined,
   'wasteToEnergyCapacity':0,
@@ -71,8 +69,6 @@ class YearStateParams{
       this.solarCapacity,
       this.windCapacity,
       this.storageEnergy,
-      this.storageEfficiency,
-      this.storageDepthOfDischarge,
       this.v2gEnergy,
       this.nuclearCapacity,
       this.dfsHoursPerYear,
@@ -197,14 +193,13 @@ var YEAR_STATE_HEADERS_WITH_COSTS = ['name'].concat(YEAR_STATE_HEADERS).concat([
   'paramSet'
 ]);
 
+// storageEfficiency and storageDepthOfDischarge were keyframe columns until 24.10.2026; they come from 13_tech-params now.
 var KEYFRAME_HEADERS = [
   'name',
   'year',
   'solarCapacity',
   'windCapacity',
   'storageEnergy',
-  'storageEfficiency',
-  'storageDepthOfDischarge',
   'v2gEnergy',
   'nuclearCapacity',
   'dfsHoursPerYear',
@@ -263,7 +258,7 @@ class YearState{
   }
   
   /**
-   * Weighted average of a PV cost parameter (capex / opex / lifetime) over the four PV types,
+   * Weighted average of a PV cost parameter (capex / opex / lifetime / wacc) over the four PV types,
    * weighted by this year's deployment shares (scenario inputs pvShare*).
    * Throws if the shares do not sum to 1.
    */
@@ -282,7 +277,8 @@ class YearState{
         throw new Error('Invalid PV share for ' + types[i][0] + ' in scenario ' + this.name + ', year ' + this.year + ': ' + share);
       }
       total += share;
-      var value = costsDb.get(types[i][0], parameter, this.year);
+      // WACC: the PV type's own row if it has one, else financial / wacc (CostsDb.getWacc)
+      var value = parameter === 'wacc' ? costsDb.getWacc(types[i][0], this.year) : costsDb.get(types[i][0], parameter, this.year);
       // PV-Dual-Use capex in the cost data is the construction cost only (roads, agro, etc.);
       // the panels themselves are costed like commercial PV.
       if (types[i][0] === 'pv-dual-use' && parameter === 'capex') {
@@ -422,7 +418,7 @@ class YearState{
     // --- SOLAR ---// --- SOLAR ---// --- SOLAR ---// --- SOLAR ---// --- SOLAR ---
     this.solarCapex = (
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          this.pvAverage(costsDb, 'wacc'),
           this.pvAverage(costsDb, 'lifetime'),
           this.pvAverage(costsDb, 'capex') * this.newSolarCapacity * 1000
         ) 
@@ -433,7 +429,7 @@ class YearState{
     // --- WIND // --- WIND ---// --- WIND ---// --- WIND ---// --- WIND ---
     this.windCapex = (
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('wind', this.year),
           costsDb.get('wind', 'lifetime', this.year),
           costsDb.get('wind', 'capex', this.year) * this.newWindCapacity * 1000
         ) 
@@ -444,7 +440,7 @@ class YearState{
     // --- STORAGE ---// --- STORAGE ---// --- STORAGE ---// --- STORAGE ---
     this.storageCapex = (
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('storage', this.year),
           costsDb.get('storage', 'lifetime', this.year),
           costsDb.get('storage', 'capex', this.year) * this.newStorageEnergy * 1000
         ) 
@@ -455,7 +451,7 @@ class YearState{
     // --- NUCLEAR  ---// --- NUCLEAR  ---// --- NUCLEAR  ---// --- NUCLEAR ---
     this.nuclearCapex=(
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('nuclear', this.year),
           costsDb.get('nuclear', 'lifetime', this.year),
           costsDb.get('nuclear', 'capex', this.year) * this.newNuclearCapacity * 1000
     )
@@ -468,7 +464,7 @@ class YearState{
     // --- WASTE TO ENERGY ---// --- WASTE TO ENERGY ---// --- WASTE TO ENERGY ---// --- WASTE TO ENERGY ---
     this.wasteToEnergyCapex=(
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('wastetoenergy', this.year),
           costsDb.get('wastetoenergy', 'lifetime', this.year),
           costsDb.get('wastetoenergy', 'capex', this.year) * this.newWasteToEnergyCapacity * 1000
     )
@@ -479,7 +475,7 @@ class YearState{
     // --- HYDROGEN  --- // --- HYDROGEN  --- // --- HYDROGEN  --- // --- HYDROGEN  ---
     this.hydrogenProductionCapex = (
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('hydrogen-production', this.year),
           costsDb.get('hydrogen-production', 'lifetime', this.year),
           costsDb.get('hydrogen-production', 'capex', this.year) * this.newHydrogenProductionCapacity * 1000,
         ) 
@@ -491,7 +487,7 @@ class YearState{
 
     this.hydrogenReuseCapex=(
             -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('hydrogen-reuse', this.year),
           costsDb.get('ccgt', 'lifetime', this.year),
           costsDb.get('hydrogen-reuse', 'capex', this.year) * this.newGasHydrogenCapacity * 1000,
         ) 
@@ -515,7 +511,7 @@ class YearState{
     // --- FOSSIL FUELS (Gas/CCGT) & EXTERNALITIES ---// --- FOSSIL FUELS (Gas/CCGT) & EXTERNALITIES ---
     this.gasCapex = (
       -1 * PMT(
-          costsDb.get('financial', 'wacc', this.year),
+          costsDb.getWacc('ccgt', this.year),
           costsDb.get('ccgt', 'lifetime', this.year),
           costsDb.get('ccgt', 'capex', this.year) * this.newGasCapacity * 1000,
         ) 

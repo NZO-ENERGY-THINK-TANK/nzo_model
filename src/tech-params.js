@@ -88,6 +88,20 @@ class CostsDb {
     return base[product][parameter].valuesByYear[year];
   }
 
+  /** True when (product, parameter) exists in this set or in the default set. */
+  has(product, parameter) {
+    var own = this.sets[this.paramSet], base = this.sets[DEFAULT_PARAM_SET];
+    return !!((own[product] && own[product][parameter]) || (base[product] && base[product][parameter]));
+  }
+
+  /**
+   * Cost of capital used to annualize the CAPEX of a technology (PMT): the product's own 'wacc' row
+   * if there is one (e.g. EA values per technology), else the general financial / wacc.
+   */
+  getWacc(product, year) {
+    return this.has(product, 'wacc') ? this.get(product, 'wacc', year) : this.get('financial', 'wacc', year);
+  }
+
   // --- SERIALIZATION HELPERS ---
   getHeaders(){
     return this.list[0].headers;
@@ -182,4 +196,28 @@ function getCostsDb() {
   // Transform: Convert raw data rows into smart objects containing forecasting logic
   costs = rows.map(row => new ForecastedParam(row));
   return new CostsDb(costs);
+}
+
+
+/**
+ * Technology parameters that drive the simulation itself (not only the costs), for one year.
+ * Read from 13_tech-params (rows storage/efficiency, storage/depth of discharge, hydrogen/efficiency)
+ * through a CostsDb view, so they follow the scenario's param_set. Predict Year uses the default set.
+ * Until 24.10.2026 these were inputs: keyframe columns and 20_year-input rows (storage), and the scenario
+ * settings table and 20_year-input (hydrogen).
+ * @param {CostsDb} costsDb - a CostsDb or a forSet() view.
+ * @param {number} year
+ */
+function techParamsForYear(costsDb, year) {
+  var out = {
+    storageEfficiency: costsDb.get('storage', 'efficiency', year),
+    storageDepthOfDischarge: costsDb.get('storage', 'depth of discharge', year),
+    hydrogenEfficenty: costsDb.get('hydrogen', 'efficiency', year)
+  };
+  Object.keys(out).forEach(function(k) {
+    if (typeof out[k] !== 'number' || isNaN(out[k])) {
+      throw new Error(SHEET_TECH_PARAMS + ' (' + costsDb.paramSet + '): no value for ' + k + ' in ' + year);
+    }
+  });
+  return out;
 }

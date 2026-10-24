@@ -67,6 +67,8 @@ class Scenario{
     // All scenario inputs come from 30_scenarios-input: the demand forecast and the other settings are per scenario.
     scen_data.scenarioSettings = this.settings;
     scen_data.futureForecast = forecastForScenario(in_data, this.settings.demandForecast);
+    // Technology parameters (storage and hydrogen efficiency) of the scenario's param_set
+    scen_data.costsDb = in_data.costsDb.forSet(this.settings.paramSet);
     for (var i = 0; i < this.years.length; ++i) {
       var yearState = this.years[i];
       // OPTIMIZATION:
@@ -77,6 +79,9 @@ class Scenario{
       }
       // 1. Prepare Parameters: Merge global data with specific year settings
       scen_data.parameters = parametersFromYearState(scen_data, yearState,i);
+      // Kept on the year state for the output (31_scenarios-yearly); no longer a keyframe input
+      yearState.storageEfficiency = scen_data.parameters.storageEfficiency;
+      yearState.storageDepthOfDischarge = scen_data.parameters.storageDepthOfDischarge;
 
       // 2. RUN SIMULATION: This calls the heavy-lifting functions (_applyDfs, _calculateStorage, etc.)
       // returns the 'yearlySummary' object we analyzed in previous steps.
