@@ -4,6 +4,16 @@
 
 > **סטטוס:** שלד. המבנה מוכן, והתוכן (קוד, נתונים, תרחיש ייחוס) יועבר בשלבים 3–5 של תוכנית המימוש (`docs/NZO_collaboration_design.md`).
 
+## קישורים
+
+| מה | קישור |
+|---|---|
+| תיקיית Google Drive (גליון המאסטר) | https://drive.google.com/drive/folders/1M1PJZQZEi3Pe3Ft-BUBu12FP52pNOw_k |
+| פרויקט Apps Script (יעד `clasp push`) | https://script.google.com/home/projects/108jUS5eOI2F3Gl0KfffnqaTiY6hyluz-RWXs9qqJjsiPbuvboAa2baOA/edit |
+| ריפו GitHub | https://github.com/NZO-ENERGY-THINK-TANK/nzo_model |
+
+הקוד נערך בריפו ונדחף לגליון עם `clasp push` מתוך `src/`. לא עורכים קוד ישירות בעורך של Apps Script.
+
 ## מבנה
 
 | תיקייה | תוכן |
